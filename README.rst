@@ -1,20 +1,20 @@
 .. contents::
 
 Introduction
-============
+############
 
 This package contains a script to manipulate deployed plone instances.
 
 Usage
-=====
+#####
 
 Script
+------
+bin/update_instances
 
-  bin/update_instances
+To display more information, use "-h" or "--help" parameter
 
-  To display more information, use "-h" or "--help" parameter
-
-  List of available parameters:
+List of available parameters:
 
 * -d, --doit : to apply changes
 * -b, --buildout : to run buildout
@@ -28,7 +28,7 @@ Script
 
 
 Installation
-============
+############
 To test this package
 
 * git clone ...
