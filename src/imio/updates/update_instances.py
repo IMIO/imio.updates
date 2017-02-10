@@ -24,9 +24,9 @@ restart = ''
 def usage():
     verbose("Here are the list of parameters:")
     verbose("-d, --doit : to apply changes")
-    verbose("-b, --buildout : run buildout")
+    verbose("-b, --buildout : to run buildout")
     verbose("-p val, --pattern=val : buildout directory filter with val as re pattern matching")
-    verbose("-s val, --superv=val : supervisor cmd (stop|restart|stopall|restartall")
+    verbose("-s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall")
     verbose("\tstop : stop the instances first (not zeo) and restart them at script end")
     verbose("\trestart : restart the instances at script end")
     verbose("\tstop : stop all buildout processes first (not zeo) and restart them at script end")
