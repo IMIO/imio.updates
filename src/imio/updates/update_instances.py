@@ -39,7 +39,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n']
-    out = ['project-instance1\n']
+    #out = ['project-instance1\n']
     buildouts = {}
     # getting buildout and started programs
     for name in out:
