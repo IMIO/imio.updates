@@ -3,7 +3,10 @@
 Introduction
 ############
 
-This package contains a script to manipulate deployed plone instances.
+This package contains:
+
+* a script to manipulate deployed plone instances managed with supervisor
+* helper methods to be used in a zope context for script run from "bin/instance run ..."
 
 Usage
 #####
@@ -26,6 +29,10 @@ List of available parameters:
   * 	stop : stop all buildout processes first (not zeo) and restart them at script end
   * 	restartall : restart all processes at script end
 
+Helper methods
+--------------
+
+* setup_app: get admin user, set request
 
 Installation
 ############
