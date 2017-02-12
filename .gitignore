@@ -1,5 +1,6 @@
 bin/*
 include/
 lib/
+log_update_instances.txt
 
 !update_instances.sh

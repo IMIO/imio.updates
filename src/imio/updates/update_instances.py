@@ -19,6 +19,7 @@ starting = ['zeoserver', 'instance1', 'instance2', 'instance3', 'instance4', 'li
 buildout = False
 stop = ''
 restart = ''
+make = ''
 
 
 def usage():
@@ -26,6 +27,7 @@ def usage():
     verbose("-d, --doit : to apply changes")
     verbose("-b, --buildout : to run buildout")
     verbose("-p val, --pattern=val : buildout directory filter with val as re pattern matching")
+    verbose("-m val, --make=val : run 'make val' command")
     verbose("-s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall")
     verbose("\tstop : stop the instances first (not zeo) and restart them at script end")
     verbose("\trestart : restart the instances at script end")
@@ -37,6 +39,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n']
+    out = ['project-instance1\n']
     buildouts = {}
     # getting buildout and started programs
     for name in out:
@@ -80,9 +83,10 @@ def run_spv(bldt, command, processes):
 def run_buildout(bldt, path):
     if not os.path.exists(path):
         error("Path '%s' doesn't exist" % path)
-        return
+        return 1
     os.chdir(path)
     cmd = 'bin/buildout -N'
+    code = 0
     if doit:
         start = datetime.now()
         verbose("=> Running '%s'" % cmd)
@@ -92,12 +96,33 @@ def run_buildout(bldt, path):
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
         verbose("=> Will be run '%s'" % cmd)
+    return code
+
+
+def run_make(bldt, path):
+    if not os.path.exists(path):
+        error("Path '%s' doesn't exist" % path)
+        return 1
+    os.chdir(path)
+    cmd = 'make %s' % make
+    code = 0
+    if doit:
+        start = datetime.now()
+        verbose("=> Running '%s'" % cmd)
+        (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
+        if code:
+            error("Problem running make: see %s/make.log file" % path)
+        verbose("\tDuration: %s" % (datetime.now() - start))
+    else:
+        verbose("=> Will be run '%s'" % cmd)
+    return code
 
 
 def main():
-    global doit, pattern, buildout, stop, restart
+    global doit, pattern, buildout, stop, restart, make
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdbp:s:", ['help', 'doit', 'buildout', 'pattern=', 'superv='])
+        opts, args = getopt.getopt(sys.argv[1:], "hdbm:p:s:", ['help', 'doit', 'buildout', 'make=', 'pattern=',
+                                                               'superv='])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -109,6 +134,8 @@ def main():
             doit = True
         elif opt in ('-p', '--pattern'):
             pattern = arg
+        elif opt in ('-m', '--make'):
+            make = arg
         elif opt in ('-b', '--buildout'):
             buildout = True
         elif opt in ('-s', '--superv'):
@@ -137,7 +164,11 @@ def main():
             elif stop == 'a':
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]]))
         if buildout:
-            run_buildout(bldt, path)
+            if run_buildout(bldt, path):
+                continue
+        if make:
+            if run_make(bldt, path):
+                continue
         if restart:
             if restart == 'i':
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('instance')])
