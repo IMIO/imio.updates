@@ -1,3 +1,5 @@
-bin/
+bin/*
 include/
 lib/
+
+!update_instances.sh
