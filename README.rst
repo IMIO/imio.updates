@@ -42,4 +42,8 @@ To deploy this package
 
 * git clone https://github.com/IMIO/imio.updates.git
 * virtualenv-2.7 .
+* bin/pip install --extra-index-url http://devpi.imio.be/root/imio/+simple -e .
+
+or
+
 * bin/python setup.py develop
