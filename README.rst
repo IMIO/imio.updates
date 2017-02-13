@@ -33,6 +33,7 @@ List of available parameters:
 Helper methods
 --------------
 
+* setup_logger: with "bin/instance run", level is 30 (warn). Useful to set it to 20 (info) or 10 (debug)
 * setup_app: get admin user, set request
 
 Installation
