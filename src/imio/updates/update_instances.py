@@ -31,8 +31,10 @@ def usage():
     verbose("-s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall")
     verbose("\tstop : stop the instances first (not zeo) and restart them at script end")
     verbose("\trestart : restart the instances at script end")
-    verbose("\tstop : stop all buildout processes first (not zeo) and restart them at script end")
+    verbose("\tstopall : stop all buildout processes first (not zeo) and restart them at script end")
     verbose("\trestartall : restart all processes at script end")
+    verbose("\tstopworker : stop the worker instances first (not zeo) and restart them at script end")
+    verbose("\trestartworker : restart the worker instances at script end")
 
 
 def get_running_buildouts():
@@ -143,10 +145,14 @@ def main():
                 stop = restart = 'i'
             elif arg == 'stopall':
                 stop = restart = 'a'
+            elif arg == 'stopworker':
+                stop = restart = 'w'
             elif arg == 'restart':
                 restart = 'i'
             elif arg == 'restartall':
                 restart = 'a'
+            elif arg == 'restartworker':
+                restart = 'w'
             else:
                 usage()
                 sys.exit(2)
@@ -163,6 +169,8 @@ def main():
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt] if p.startswith('instance')]))
             elif stop == 'a':
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]]))
+            elif stop == 'w':
+                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt] if p.startswith('worker')]))
         if buildout:
             if run_buildout(bldt, path):
                 continue
@@ -174,4 +182,6 @@ def main():
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('instance')])
             elif restart == 'a':
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt]])
+            elif restart == 'w':
+                run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('worker')])
     verbose("Script duration: %s" % (datetime.now() - start))

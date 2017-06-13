@@ -29,6 +29,8 @@ List of available parameters:
   * 	restart : restart the instances at script end
   * 	stopall : stop all buildout processes first (not zeo) and restart them at script end
   * 	restartall : restart all processes at script end
+  *     stopworker : stop the worker instances first (not zeo) and restart them at script end
+  *     restartworker : restart the worker instances at script end
 
 Helper methods
 --------------
