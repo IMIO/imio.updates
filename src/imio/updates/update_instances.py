@@ -31,7 +31,7 @@ def usage():
     verbose("-s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall")
     verbose("\tstop : stop the instances first (not zeo) and restart them at script end")
     verbose("\trestart : restart the instances at script end")
-    verbose("\tstopall : stop all buildout processes first (not zeo) and restart them at script end")
+    verbose("\tstopall : stop all buildout processes first and restart them at script end")
     verbose("\trestartall : restart all processes at script end")
     verbose("\tstopworker : stop the worker instances first (not zeo) and restart them at script end")
     verbose("\trestartworker : restart the worker instances at script end")
