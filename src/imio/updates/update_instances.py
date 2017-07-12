@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-import getopt
+import argparse
 import os
 import re
-import sys
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
@@ -26,9 +25,9 @@ def usage():
     verbose("Here are the list of parameters:")
     verbose("-d, --doit : to apply changes")
     verbose("-b, --buildout : to run buildout")
-    verbose("-p val, --pattern=val : buildout directory filter with val as re pattern matching")
-    verbose("-m val, --make=val : run 'make val' command")
-    verbose("-s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall")
+    verbose("-p val, --pattern val : buildout directory filter with val as re pattern matching")
+    verbose("-m val, --make val : run 'make val' command")
+    verbose("-s val, --superv val : to run supervisor command (stop|restart|stopall|restartall")
     verbose("\tstop : stop the instances first (not zeo) and restart them at script end")
     verbose("\trestart : restart the instances at script end")
     verbose("\tstopall : stop all buildout processes first and restart them at script end")
@@ -122,42 +121,38 @@ def run_make(bldt, path):
 
 def main():
     global doit, pattern, buildout, stop, restart, make
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdbm:p:s:", ['help', 'doit', 'buildout', 'make=', 'pattern=',
-                                                               'superv='])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ('-h', '--help'):
-            usage()
-            sys.exit()
-        if opt in ('-d', '--doit'):
-            doit = True
-        elif opt in ('-p', '--pattern'):
-            pattern = arg
-        elif opt in ('-m', '--make'):
-            make = arg
-        elif opt in ('-b', '--buildout'):
-            buildout = True
-        elif opt in ('-s', '--superv'):
-            if arg == 'stop':
-                stop = restart = 'i'
-            elif arg == 'stopall':
-                stop = restart = 'a'
-            elif arg == 'stopworker':
-                stop = restart = 'w'
-            elif arg == 'restart':
-                restart = 'i'
-            elif arg == 'restartall':
-                restart = 'a'
-            elif arg == 'restartworker':
-                restart = 'w'
-            else:
-                usage()
-                sys.exit(2)
+    parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
+    parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
+    parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
+    parser.add_argument('-p', '--pattern', dest='pattern',
+                        help='Buildout directory filter with PATTERN as re pattern matching')
+    parser.add_argument('-m', '--make', nargs='+', dest='make',
+                        help="Run 'make MAKE...' command")
+    parser.add_argument('-s', '--superv', dest='superv',
+                        choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
+                        help="To run supervisor command:"
+                             " * stop : stop the instances first (not zeo) and restart them at script end."
+                             " * restart : restart the instances at script end."
+                             " * stopall : stop all buildout processes first and restart them at script end."
+                             " * restartall : restart all processes at script end."
+                             " * stopworker : stop the worker instances first (not zeo) and restart them at script end."
+                             " * restartworker : restart the worker instances at script end.")
+    ns = parser.parse_args()
+    doit, buildout, pattern, make = ns.doit, ns.buildout, ns.pattern, ' '.join(ns.make)
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
+    if ns.superv == 'stop':
+        stop = restart = 'i'
+    elif ns.superv == 'stopall':
+        stop = restart = 'a'
+    elif ns.superv == 'stopworker':
+        stop = restart = 'w'
+    elif ns.superv == 'restart':
+        restart = 'i'
+    elif ns.superv == 'restartall':
+        restart = 'a'
+    elif ns.superv == 'restartworker':
+        restart = 'w'
 
     start = datetime.now()
     buildouts = get_running_buildouts()
