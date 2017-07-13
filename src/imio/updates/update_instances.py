@@ -100,7 +100,10 @@ def run_buildout(bldt, path):
     return code
 
 
-def run_make(bldt, path):
+def run_make(buildouts, bldt, path):
+    if 'zeoserver' not in buildouts[bldt]:
+        error("Zope isn't running")
+        return 1
     if not os.path.exists(path):
         error("Path '%s' doesn't exist" % path)
         return 1
@@ -169,9 +172,6 @@ def main():
         if buildout:
             if run_buildout(bldt, path):
                 continue
-        if make:
-            if run_make(bldt, path):
-                continue
         if restart:
             if restart == 'i':
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('instance')])
@@ -179,4 +179,6 @@ def main():
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt]])
             elif restart == 'w':
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('worker')])
+        if make:
+            run_make(buildouts, bldt, path)
     verbose("Script duration: %s" % (datetime.now() - start))
