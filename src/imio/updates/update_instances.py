@@ -138,7 +138,7 @@ def main():
                              " * stopworker : stop the worker instances first (not zeo) and restart them at script end."
                              " * restartworker : restart the worker instances at script end.")
     ns = parser.parse_args()
-    doit, buildout, pattern, make = ns.doit, ns.buildout, ns.pattern, ' '.join(ns.make)
+    doit, buildout, pattern, make = ns.doit, ns.buildout, ns.pattern, ' '.join(ns.make or [])
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
     if ns.superv == 'stop':
