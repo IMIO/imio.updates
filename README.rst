@@ -13,7 +13,7 @@ Usage
 
 Script
 ------
-bin/update_instances
+bin/update_instances or bin/instances_update.sh
 
 To display more information, use "-h" or "--help" parameter
 
