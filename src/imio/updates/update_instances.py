@@ -100,7 +100,7 @@ def run_buildout(bldt, path):
     return code
 
 
-def run_make(buildouts, bldt, path):
+def run_make(buildouts, bldt, path, make):
     if 'zeoserver' not in buildouts[bldt]:
         error("Zope isn't running")
         return 1
@@ -129,7 +129,7 @@ def main():
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
     parser.add_argument('-p', '--pattern', dest='pattern',
                         help='Buildout directory filter with PATTERN as re pattern matching')
-    parser.add_argument('-m', '--make', nargs='+', dest='make',
+    parser.add_argument('-m', '--make', nargs='+', dest='make', action='append',
                         help="Run 'make MAKE...' command")
     parser.add_argument('-s', '--superv', dest='superv',
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
@@ -141,7 +141,7 @@ def main():
                              " * stopworker : stop the worker instances first (not zeo) and restart them at script end."
                              " * restartworker : restart the worker instances at script end.")
     ns = parser.parse_args()
-    doit, buildout, pattern, make = ns.doit, ns.buildout, ns.pattern, ' '.join(ns.make or [])
+    doit, buildout, pattern, make = ns.doit, ns.buildout, ns.pattern, (ns.make or [])
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
     if ns.superv == 'stop':
@@ -180,5 +180,6 @@ def main():
             elif restart == 'w':
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('worker')])
         if make:
-            run_make(buildouts, bldt, path)
+            for param_list in make:
+                run_make(buildouts, bldt, path, ' '.join(param_list))
     verbose("Script duration: %s" % (datetime.now() - start))
