@@ -21,7 +21,7 @@ List of available parameters:
 
 * -d, --doit : to apply changes
 * -b, --buildout : to run buildout
-* -m val, --make=val : run 'make val' command
+* -m val, --make=val : run 'make val' command (can use multiple times -m)
 * -p val, --pattern=val : buildout directory filter with val as re pattern matching
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
 
