@@ -121,7 +121,7 @@ def run_make(buildouts, bldt, path, make):
 def run_function(buildouts, bldt, path, params):
     os.chdir(path)
     plone = get_plone_site(path)
-    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, function_script, params)
+    cmd = '%s/bin/%s -O%s run %s %s' % (path, instance, plone, function_script, params)
     code = 0
     if doit:
         start = datetime.now()
