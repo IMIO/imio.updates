@@ -118,10 +118,10 @@ def run_make(buildouts, bldt, path, make):
     return code
 
 
-def run_function(buildouts, bldt, path, fct, params):
+def run_function(buildouts, bldt, path, params):
     os.chdir(path)
     plone = get_plone_site(path)
-    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, function_script, fct, params)
+    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, function_script, params)
     code = 0
     if doit:
         start = datetime.now()
@@ -216,5 +216,5 @@ def main():
                 run_make(buildouts, bldt, path, ' '.join(param_list))
         if functions:
             for param_list in functions:
-                run_function(buildouts, bldt, path, param_list.pop(0), ' '.join(param_list))
+                run_function(buildouts, bldt, path, ' '.join(param_list))
     verbose("Script duration: %s" % (datetime.now() - start))
