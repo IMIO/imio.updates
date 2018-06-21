@@ -20,17 +20,25 @@ To display more information, use "-h" or "--help" parameter
 List of available parameters:
 
 * -d, --doit : to apply changes
+* -p val, --pattern=val : buildout directory filter with val as re pattern matching
 * -b, --buildout : to run buildout
 * -m val, --make=val : run 'make val' command (can use multiple times -m)
-* -p val, --pattern=val : buildout directory filter with val as re pattern matching
+* -i val, --instance=val : instance name used to run function or make (default instance-debug)
+* -f, --function : run a predefined function with arguments. (can use multiple times -f)
+
+  *     step ``profile-name`` ``step-name`` : run the given step for the given profile
+  *     step ``profile-name`` _all_ : run all steps for the given profile
+  *     upgrade ``profile-name`` : run the upgrade steps for the given profile
+  *     upgrade _all_ : run the upgrade steps for all profiles
+
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
 
-  * 	stop : stop the instances first (not zeo) and restart them at script end
-  * 	restart : restart the instances at script end
-  * 	stopall : stop all buildout processes first and restart them at script end
-  * 	restartall : restart all processes at script end
-  *     stopworker : stop the worker instances first (not zeo) and restart them at script end
-  *     restartworker : restart the worker instances at script end
+  * 	stop : stop the instances first (not zeo) and restart it after buildout
+  * 	restart : restart the instances after buildout
+  * 	stopall : stop all buildout processes first and restart it after buildout
+  * 	restartall : restart all processes after buildout
+  *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
+  *     restartworker : restart the worker instances after buildout
 
 Helper methods
 --------------
@@ -38,11 +46,16 @@ Helper methods
 * setup_logger: with "bin/instance run", level is 30 (warn). Useful to set it to 20 (info) or 10 (debug)
 * setup_app: get admin user, set request
 
-Tips
-----
+Tips & examples
+---------------
 
-* -p '^(?!name)' : match instances not starting with name
-* -p .*_ged_20_1 : match instances ending with _ged_20_1
+* -p ``'^(?!name)'`` : match instances not starting with name
+* -p ``.*_ged_20_1`` : match instances ending with _ged_20_1
+* -f step ``imio.dms.mail:default`` ``actions`` : run import step for profile profile-imio.dms.mail:default actions
+
+Multiple options:
+
+* -p ``.*_ged_20_1`` -b -s restartall -m ``various-script`` -f step ``imio.dms.mail:default`` ``actions`` -f step ``collective.documentgenerator:default`` ``typeinfo`` -d
 
 Installation
 ############

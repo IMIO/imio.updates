@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import os
 
 version = '0.2.dev0'
 
@@ -21,8 +20,8 @@ setup(name='imio.updates',
       # Get more strings from
       # http://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
-        "Programming Language :: Python",
-        ],
+          "Programming Language :: Python",
+      ],
       keywords='',
       author='',
       author_email='',
@@ -36,15 +35,16 @@ setup(name='imio.updates',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'imio.pyutils >= 0.6',
+          'imio.pyutils >= 0.9',
           'ipdb',
       ],
       dependency_links=[
 #          'git://github.com/IMIO/imio.pyutils.git#egg=imio.pyutils'
           'https://github.com/IMIO/imio.pyutils/zipball/master#egg=imio.pyutils-0.6'
       ],
-      entry_points="""
-      [console_scripts]
-      update_instances = imio.updates.update_instances:main
-      """,
+      entry_points={
+          'console_scripts': [
+              'update_instances = imio.updates.update_instances:main',
+          ]
+      },
       )
