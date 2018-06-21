@@ -38,6 +38,12 @@ Helper methods
 * setup_logger: with "bin/instance run", level is 30 (warn). Useful to set it to 20 (info) or 10 (debug)
 * setup_app: get admin user, set request
 
+Tips
+----
+
+* -p '^(?!name)' : match instances not starting with name
+* -p .*_ged_20_1 : match instances ending with _ged_20_1
+
 Installation
 ############
 
