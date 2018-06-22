@@ -118,17 +118,17 @@ def run_make(buildouts, bldt, path, make):
     return code
 
 
-def run_function(buildouts, bldt, path, params):
+def run_function(buildouts, bldt, path, fct, params):
     os.chdir(path)
     plone = get_plone_site(path)
-    cmd = '%s/bin/%s -O%s run %s %s' % (path, instance, plone, function_script, params)
+    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, function_script, fct, params)
     code = 0
     if doit:
         start = datetime.now()
         verbose("=> Running '%s'" % cmd)
         (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
         if code:
-            error("Problem running make: see %s/make.log file" % path)
+            error("Problem running '%s' function: see %s/make.log file" % (fct, path))
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
         verbose("=> Will be run '%s'" % cmd)
@@ -142,6 +142,12 @@ def main():
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
     parser.add_argument('-p', '--pattern', dest='pattern',
                         help='Buildout directory filter with PATTERN as re pattern matching')
+    parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='8',
+                        help='Enable/disable authentication plugins:'
+                             ' * 0 : disable only'
+                             ' * 1 : enable only'
+                             ' * 8 : disable before make or function and enable after (default)'
+                             ' * 9 : don''t do anything')
     parser.add_argument('-m', '--make', nargs='+', dest='make', action='append', default=[],
                         help="Run 'make MAKE...' command")
     parser.add_argument('-f', '--function', nargs='+', dest='functions', action='append', default=[],
@@ -164,7 +170,7 @@ def main():
                              " * restartworker : restart the worker instances after buildout.")
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
-    make, functions = ns.make, ns.functions
+    make, functions, auth = ns.make, ns.functions, ns.auth
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
     if ns.superv == 'stop':
@@ -211,10 +217,14 @@ def main():
             error("Zeoserver isn't running")
             continue
 
+        if auth == '0' or (auth == '8' and (make or functions)):
+            run_function(buildouts, bldt, path, 'auth', '0')
         if make:
             for param_list in make:
                 run_make(buildouts, bldt, path, ' '.join(param_list))
         if functions:
             for param_list in functions:
-                run_function(buildouts, bldt, path, ' '.join(param_list))
+                run_function(buildouts, bldt, path, param_list[0], ' '.join(param_list[1:]))
+        if auth == '1' or (auth == '8' and (make or functions)):
+            run_function(buildouts, bldt, path, 'auth', '1')
     verbose("Script duration: %s" % (datetime.now() - start))

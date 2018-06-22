@@ -60,9 +60,23 @@ def run_upgrade():
     transaction.commit()
 
 
+def run_auth():
+    from Products.ExternalMethod.ExternalMethod import manage_addExternalMethod
+    # we add the external method cputils_install
+    if not hasattr(app, 'cputils_install'):
+        manage_addExternalMethod(app, 'cputils_install', '', 'CPUtils.utils', 'install')
+    # we run this method
+    app.cputils_install(app)
+    # change authentication
+    status = sys.argv[4]
+    app.cputils_change_authentication_plugins(activate=status, dochange='1')
+    verbose("Authentication plugins %s" % (status == '0' and 'disabled' or 'enabled'))
+    transaction.commit()
+
+
 info = ["You can pass following parameters (with the first one always script number):", "step: run profile step",
-        "upgrade: run profile upgrade"]
-scripts = {'step': run_step, 'upgrade': run_upgrade}
+        "upgrade: run profile upgrade", "auth: enable/disable authentication plugins"]
+scripts = {'step': run_step, 'upgrade': run_upgrade, 'auth': run_auth}
 
 if len(sys.argv) < 4 or sys.argv[3] not in scripts:
     error("Bad script parameter")

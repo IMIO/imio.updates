@@ -22,6 +22,13 @@ List of available parameters:
 * -d, --doit : to apply changes
 * -p val, --pattern=val : buildout directory filter with val as re pattern matching
 * -b, --buildout : to run buildout
+* -a, --auth : enable/disable authentication plugins
+
+  * 0 : disable only
+  * 1 : enable only
+  * 8 : disable before make or function and enable after (default)
+  * 9 : don't do anything
+
 * -m val, --make=val : run 'make val' command (can use multiple times -m)
 * -i val, --instance=val : instance name used to run function or make (default instance-debug)
 * -f, --function : run a predefined function with arguments. (can use multiple times -f)

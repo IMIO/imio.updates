@@ -6,6 +6,8 @@ Changelog
 
 - Added new parameters to run functions like import step or upgrade step.
   [sgeulette]
+- Added new parameter to manage authentication plugins
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------
