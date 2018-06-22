@@ -70,6 +70,7 @@ Installation
 To deploy this package
 
 * git clone https://github.com/IMIO/imio.updates.git
+* cd imio.updates
 * virtualenv-2.7 .
 * bin/pip install --trusted-host devpi.imio.be --extra-index-url http://devpi.imio.be/root/imio/+simple -e .
 
