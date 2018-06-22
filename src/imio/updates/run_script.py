@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from imio.pyutils.system import verbose, error
 import transaction
 from plone import api
+
+
+def verbose(msg):
+    print '>> %s' % msg
+
+
+def error(msg):
+    print >> sys.stderr, '!! %s' % msg
+
 
 # Parameters check
 if len(sys.argv) < 3 or not sys.argv[2].endswith('run_script.py'):
