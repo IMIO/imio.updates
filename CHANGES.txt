@@ -8,6 +8,8 @@ Changelog
   [sgeulette]
 - Added new parameter to manage authentication plugins
   [sgeulette]
+- Added new parameter to manage messages
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------

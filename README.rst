@@ -38,6 +38,16 @@ List of available parameters:
   *     upgrade ``profile-name`` : run the upgrade steps for the given profile
   *     upgrade _all_ : run the upgrade steps for all profiles
 
+* -w, --warning : create or update a message. Parameters like xx="string value". All parameters must be enclosed by quotes: 'xx="val" yy=True'.
+
+  * id="maintenance-soon"
+  * text="A maintenance operation will be done at 4pm."
+  * activate=True
+  * msg_type="" (info, significant, warning (default))
+  * can_hide=True
+  * start, end="YYYYMMDD-hhmm"
+  * ...
+
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
 
   * 	stop : stop the instances first (not zeo) and restart it after buildout
@@ -59,6 +69,7 @@ Tips & examples
 * -p ``'^(?!name)'`` : match instances not starting with name
 * -p ``.*_ged_20_1`` : match instances ending with _ged_20_1
 * -f step ``imio.dms.mail:default`` ``actions`` : run import step for profile profile-imio.dms.mail:default actions
+* -w '``id="maintenance-soon" text="A maintenance operation will be done at 4pm." activate=True``'
 
 Multiple options:
 

@@ -10,7 +10,7 @@ import re
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
 
-from imio.pyutils.system import runCommand, verbose, error
+from imio.pyutils.system import runCommand, verbose, error, dump_var
 
 doit = False
 pattern = ''
@@ -22,15 +22,18 @@ buildout = False
 instance = 'instance-debug'
 stop = ''
 restart = ''
-make = []
-functions = []
+warning_dic = {}
+warning_errors = False
+warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
+warning_first_pass = True
+warning_ids = []
 
 
 def get_running_buildouts():
     """ Get running buildouts and instances"""
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
-    #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n']
+    #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
     #out = ['project-instance1\n']
     buildouts = {}
     # getting buildout and started programs
@@ -135,8 +138,44 @@ def run_function(buildouts, bldt, path, fct, params):
     return code
 
 
+def compile_warning(i, params):
+    global warning_errors
+    p_dic = {}
+    import re
+    regex = re.compile(r'[^"\s]+(?:"[^"\\]*(?:\\.[^"\\]*)*")*', re.VERBOSE)
+    # [^"\s]+  something different from doublequotes
+    # (?:"")*  optional doublequotes
+    # [^"\\]*(?:\\.[^"\\]*)*  something different from doublequote, escaping protected doublequotes
+
+    for param in params:
+        for part in regex.findall(param):
+            try:
+                p_dic.update(eval('dict(%s)' % part))
+            except Exception, msg:
+                error("Problem in -w with param '%s': %s" % (part, msg))
+                warning_errors = True
+    verbose("Message parameters: %s" % p_dic)
+    mandatory_params = ['id', 'activate']
+    for param in mandatory_params:
+        if param not in p_dic:
+            error("Parameter '%s' is required !" % param)
+            warning_errors = True
+    for dt in ('start', 'end'):
+        if dt in p_dic:
+            try:
+                p_dic[dt] = datetime.strptime(p_dic[dt], '%Y%m%d-%H%M')
+            except ValueError, msg:
+                error("Cannot compile datetime '%s' : %s" % (p_dic[dt], msg))
+                warning_errors = True
+
+    id = p_dic.pop('id', 'no_id')
+    warning_dic[id] = p_dic
+    dump_var(warning_file, warning_dic)
+    warning_ids.insert(i, id)
+
+
 def main():
-    global doit, pattern, buildout, instance, stop, restart, make, functions
+    global doit, pattern, instance, stop, restart, warning_first_pass
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -157,6 +196,15 @@ def main():
                              " * upgrade `profile`"
                              " * upgrade `_all_`"
                         )
+    parser.add_argument('-w', '--warning', nargs='+', dest='warnings', action='append', default=[],
+                        help='Create or update a message. Parameters like xx="string value".'
+                             ' All parameters must be enclosed by quotes: \'xx="val" yy=True\'.'
+                             ' Following parameters are possible:'
+                             ' * id="maintenance-soon"'
+                             ' * text="A maintenance operation will be done at 4pm."'
+                             ' * activate=True'
+                             ' * ...'
+                        )
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
     parser.add_argument('-s', '--superv', dest='superv',
@@ -168,9 +216,11 @@ def main():
                              " * restartall : restart all processes after buildout."
                              " * stopworker : stop the worker instances first (not zeo) and restart it after buildout."
                              " * restartworker : restart the worker instances after buildout.")
+#    parser.add_argument('-w', '--warn', nargs='+', dest='messages', action='append', default=[],
+#                        help="Update a message in viewlet")
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
-    make, functions, auth = ns.make, ns.functions, ns.auth
+    make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
     if ns.superv == 'stop':
@@ -219,12 +269,25 @@ def main():
 
         if auth == '0' or (auth == '8' and (make or functions)):
             run_function(buildouts, bldt, path, 'auth', '0')
+
         if make:
             for param_list in make:
                 run_make(buildouts, bldt, path, ' '.join(param_list))
+
         if functions:
             for param_list in functions:
                 run_function(buildouts, bldt, path, param_list[0], ' '.join(param_list[1:]))
+
+        if warnings:
+            if warning_first_pass:
+                for i, param_list in enumerate(warnings):
+                    compile_warning(i, param_list)
+                warning_first_pass = False
+            if not warning_errors:
+                for id in warning_ids:
+                    run_function(buildouts, bldt, path, 'message', '%s %s' % (id, warning_file))
+
         if auth == '1' or (auth == '8' and (make or functions)):
             run_function(buildouts, bldt, path, 'auth', '1')
+
     verbose("Script duration: %s" % (datetime.now() - start))
