@@ -57,6 +57,8 @@ List of available parameters:
   *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
   *     restartworker : restart the worker instances after buildout
 
+To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
+
 Helper methods
 --------------
 

@@ -10,6 +10,8 @@ Changelog
   [sgeulette]
 - Added new parameter to manage messages
   [sgeulette]
+- Can change logger level in run_script
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------

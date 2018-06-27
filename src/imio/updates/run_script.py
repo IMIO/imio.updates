@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import sys
 import transaction
 from plone import api
+
+LOGGER_LEVEL = 30  # 30=warning, 20=info, 10=debug
 
 
 # Copied from imio.pyutils
@@ -27,6 +30,21 @@ def load_var(infile, var):
             var.extend(eval(ofile.read()))
         ofile.close()
 
+
+def setup_logger(level=20):
+    """
+        When running "bin/instance run ...", the logger level is 30 (warn).
+        It is possible to set it to 20 (info) or 10 (debug).
+    """
+    logger = logging.getLogger()
+    logger.setLevel(level)
+    for handler in logging.root.handlers:
+        if handler.level == 30 and handler.formatter is not None:
+            handler.level = level
+            break
+
+if LOGGER_LEVEL != 30:
+    setup_logger(LOGGER_LEVEL)
 
 # Parameters check
 if len(sys.argv) < 3 or not sys.argv[2].endswith('run_script.py'):
