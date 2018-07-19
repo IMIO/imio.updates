@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from plone import api
+
+import datetime  # can be in dictionary to eval
 import logging
 import os
 import sys
 import transaction
-from plone import api
 
 LOGGER_LEVEL = 30  # 30=warning, 20=info, 10=debug
 
