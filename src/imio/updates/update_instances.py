@@ -217,7 +217,7 @@ def main():
                              " * restartall : restart all processes after buildout."
                              " * stopworker : stop the worker instances first (not zeo) and restart it after buildout."
                              " * restartworker : restart the worker instances after buildout.")
-    parser.add_argument('-c', '--custom', nargs='+', action='store_true', dest='custom', help="To run a custom script")
+    parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
 #    parser.add_argument('-w', '--warn', nargs='+', dest='messages', action='append', default=[],
 #                        help="Update a message in viewlet")
     ns = parser.parse_args()
@@ -276,9 +276,9 @@ def main():
             for param_list in make:
                 run_make(buildouts, bldt, path, ' '.join(param_list))
 
-        if custom:
-            for param_list in custom:
-                run_function(path, ' '.join(param_list[1:], script=param_list[0]))
+        if ns.custom:
+            for param_list in ns.custom:
+                run_function(path, ' '.join(param_list[1:]), script=param_list[0])
 
         if functions:
             for param_list in functions:
