@@ -1,0 +1,3 @@
+setuptools
+imio.pyutils>=0.9
+ipdb

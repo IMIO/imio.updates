@@ -1,0 +1,137 @@
+Metadata-Version: 1.1
+Name: imio.updates
+Version: 0.2.dev0
+Summary: Helpers to update plone instances
+Home-page: https://github.com/imio/imio.updates
+Author: UNKNOWN
+Author-email: UNKNOWN
+License: gpl
+Description: .. contents::
+        
+        Introduction
+        ############
+        
+        This package contains:
+        
+        * a script to manipulate deployed plone instances managed with supervisor
+        * helper methods to be used in a zope context for script run from "bin/instance run ..."
+        
+        Usage
+        #####
+        
+        Script
+        ------
+        bin/update_instances or bin/instances_update.sh
+        
+        To display more information, use "-h" or "--help" parameter
+        
+        List of available parameters:
+        
+        * -d, --doit : to apply changes
+        * -p val, --pattern=val : buildout directory filter with val as re pattern matching
+        * -b, --buildout : to run buildout
+        * -a, --auth : enable/disable authentication plugins
+        
+          * 0 : disable only
+          * 1 : enable only
+          * 8 : disable before make or function and enable after (default)
+          * 9 : don't do anything
+        
+        * -m val, --make=val : run 'make val' command (can use multiple times -m)
+        * -i val, --instance=val : instance name used to run function or make (default instance-debug)
+        * -f, --function : run a predefined function with arguments. (can use multiple times -f)
+        
+          *     step ``profile-name`` ``step-name`` : run the given step for the given profile
+          *     step ``profile-name`` _all_ : run all steps for the given profile
+          *     upgrade ``profile-name`` : run the upgrade steps for the given profile
+          *     upgrade _all_ : run the upgrade steps for all profiles
+        
+        * -w, --warning : create or update a message. Parameters like xx="string value". All parameters must be enclosed by quotes: 'xx="val" yy=True'.
+        
+          * id="maintenance-soon"
+          * text="A maintenance operation will be done at 4pm."
+          * activate=True
+          * msg_type="" (info, significant, warning (default))
+          * can_hide=True
+          * start, end="YYYYMMDD-hhmm"
+          * ...
+        
+        * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
+        
+          * 	stop : stop the instances first (not zeo) and restart it after buildout
+          * 	restart : restart the instances after buildout
+          * 	stopall : stop all buildout processes first and restart it after buildout
+          * 	restartall : restart all processes after buildout
+          *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
+          *     restartworker : restart the worker instances after buildout
+        
+        To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
+        
+        Helper methods
+        --------------
+        
+        * setup_logger: with "bin/instance run", level is 30 (warn). Useful to set it to 20 (info) or 10 (debug)
+        * setup_app: get admin user, set request
+        
+        Tips & examples
+        ---------------
+        
+        * -p ``'^(?!name)'`` : match instances not starting with name
+        * -p ``.*_ged_20_1`` : match instances ending with _ged_20_1
+        * -f step ``imio.dms.mail:default`` ``actions`` : run import step for profile profile-imio.dms.mail:default actions
+        * -w '``id="maintenance-soon" text="A maintenance operation will be done at 4pm." activate=True``'
+        
+        Multiple options:
+        
+        * -p ``.*_ged_20_1`` -b -s restartall -m ``various-script`` -f step ``imio.dms.mail:default`` ``actions`` -f step ``collective.documentgenerator:default`` ``typeinfo`` -d
+        
+        Installation
+        ############
+        
+        To deploy this package
+        
+        * git clone https://github.com/IMIO/imio.updates.git
+        * cd imio.updates
+        * virtualenv-2.7 .
+        * bin/pip install --trusted-host devpi.imio.be --extra-index-url http://devpi.imio.be/root/imio/+simple -e .
+        
+        (if problem with imio.pyutils: bin/pip install -f http://devpi.imio.be/root/imio/+simple/imio.pyutils imio.pyutils)
+        
+        or
+        
+        * bin/python setup.py develop
+        
+        Contributors
+        ============
+        
+        Note:  place names and roles of the people who contribute to this package
+               in this file, one to a line, like so:
+        
+        - Joe Schmoe, Original Author
+        - Bob Slob, contributed monkey patches
+        - Jane Main, wrote flibberty module
+        
+        Changelog
+        =========
+        
+        0.2 (unreleased)
+        ----------------
+        
+        - Added new parameters to run functions like import step or upgrade step.
+          [sgeulette]
+        - Added new parameter to manage authentication plugins
+          [sgeulette]
+        - Added new parameter to manage messages
+          [sgeulette]
+        - Can change logger level in run_script
+          [sgeulette]
+        
+        0.1 (2018-06-21)
+        ----------------
+        
+        - Package created
+          [sgeulette]
+        
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python

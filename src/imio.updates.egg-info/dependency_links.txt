@@ -1,0 +1,1 @@
+https://github.com/IMIO/imio.pyutils/zipball/master#egg=imio.pyutils-0.6

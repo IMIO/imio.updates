@@ -19,6 +19,7 @@ basedir = '/srv/instances'
 starting = ['zeoserver', 'instance1', 'instance2', 'instance3', 'instance4', 'libreoffice',
             'worker-amqp', 'worker-async']
 buildout = False
+custom = False
 instance = 'instance-debug'
 stop = ''
 restart = ''
@@ -121,10 +122,10 @@ def run_make(buildouts, bldt, path, make):
     return code
 
 
-def run_function(buildouts, bldt, path, fct, params):
+def run_function(path, fct, params, script = function_script):
     os.chdir(path)
     plone = get_plone_site(path)
-    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, function_script, fct, params)
+    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, script, fct, params)
     code = 0
     if doit:
         start = datetime.now()
@@ -216,6 +217,7 @@ def main():
                              " * restartall : restart all processes after buildout."
                              " * stopworker : stop the worker instances first (not zeo) and restart it after buildout."
                              " * restartworker : restart the worker instances after buildout.")
+    parser.add_argument('-c', '--custom', nargs='+', action='store_true', dest='custom', help="To run a custom script")
 #    parser.add_argument('-w', '--warn', nargs='+', dest='messages', action='append', default=[],
 #                        help="Update a message in viewlet")
     ns = parser.parse_args()
@@ -268,15 +270,19 @@ def main():
             continue
 
         if auth == '0' or (auth == '8' and (make or functions)):
-            run_function(buildouts, bldt, path, 'auth', '0')
+            run_function(path, 'auth', '0')
 
         if make:
             for param_list in make:
                 run_make(buildouts, bldt, path, ' '.join(param_list))
 
+        if custom:
+            for param_list in custom:
+                run_function(path, ' '.join(param_list[1:], script=param_list[0]))
+
         if functions:
             for param_list in functions:
-                run_function(buildouts, bldt, path, param_list[0], ' '.join(param_list[1:]))
+                run_function(path, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
             if warning_first_pass:
@@ -285,9 +291,9 @@ def main():
                 warning_first_pass = False
             if not warning_errors:
                 for id in warning_ids:
-                    run_function(buildouts, bldt, path, 'message', '%s %s' % (id, warning_file))
+                    run_function(path, 'message', '%s %s' % (id, warning_file))
 
         if auth == '1' or (auth == '8' and (make or functions)):
-            run_function(buildouts, bldt, path, 'auth', '1')
+            run_function(path, 'auth', '1')
 
     verbose("Script duration: %s" % (datetime.now() - start))

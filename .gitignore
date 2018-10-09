@@ -2,5 +2,5 @@ bin/*
 include/
 lib/
 log_update_instances.txt
-
+.idea/
 !update_instances.sh
