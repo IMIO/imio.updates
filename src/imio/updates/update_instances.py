@@ -278,7 +278,7 @@ def main():
 
         if ns.custom:
             for param_list in ns.custom:
-                run_function(path, ' '.join(param_list[1:]), script=param_list[0])
+                run_function(path=path, script=param_list[0], fct=param_list[1], params=' '.join(param_list[2:]))
 
         if functions:
             for param_list in functions:
