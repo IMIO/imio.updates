@@ -19,7 +19,6 @@ basedir = '/srv/instances'
 starting = ['zeoserver', 'instance1', 'instance2', 'instance3', 'instance4', 'libreoffice',
             'worker-amqp', 'worker-async']
 buildout = False
-custom = False
 instance = 'instance-debug'
 stop = ''
 restart = ''
