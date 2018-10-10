@@ -57,6 +57,11 @@ List of available parameters:
   *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
   *     restartworker : restart the worker instances after buildout
 
+* -c, --custom : run a custom script with arguments. 
+
+  * First parameter is the relative path from your buildout to the script file.
+  * Other parameters are arguments to be given to the script when called.
+
 To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
 
 Helper methods
@@ -72,6 +77,7 @@ Tips & examples
 * -p ``.*_ged_20_1`` : match instances ending with _ged_20_1
 * -f step ``imio.dms.mail:default`` ``actions`` : run import step for profile profile-imio.dms.mail:default actions
 * -w '``id="maintenance-soon" text="A maintenance operation will be done at 4pm." activate=True``'
+* -c ``scripts/my_custom.py param1 param2`` : calls the scripts at buildout/scripts/my_custom.py with param1 and param2 as arguments
 
 Multiple options:
 
