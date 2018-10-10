@@ -1,3 +1,0 @@
-[console_scripts]
-update_instances = imio.updates.update_instances:main
-
