@@ -2,15 +2,24 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+from email.mime.text import MIMEText
+from imio.pyutils.system import dump_var
+from imio.pyutils.system import error
+from imio.pyutils.system import runCommand
+from imio.pyutils.system import verbose
+
 import argparse
 import os
 import re
+import smtplib
+import socket
+
+
 # import sys
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
 
-from imio.pyutils.system import runCommand, verbose, error, dump_var
 
 doit = False
 pattern = ''
@@ -43,9 +52,9 @@ def get_running_buildouts():
             if name.endswith('-%s' % started):
                 bldt = name[:-(len(started)+1)]
                 if bldt not in buildouts:
-                    buildouts[bldt] = [started]
+                    buildouts[bldt] = {'spv': [started]}
                 else:
-                    buildouts[bldt].append(started)
+                    buildouts[bldt]['spv'].append(started)
                 break
         else:
             error("Cannot extract buildout name from '%s'" % name)
@@ -57,7 +66,7 @@ def get_running_buildouts():
             del buildouts[bldt]
             escaped.append(bldt)
         else:
-            buildouts[bldt].sort(key=lambda x: starting.index(x))
+            buildouts[bldt]['spv'].sort(key=lambda x: starting.index(x))
     if escaped:
         verbose("Escaped buildouts: %s" % ', '.join(sorted(escaped)))
     return buildouts
@@ -75,6 +84,22 @@ def get_plone_site(path):
     return name
 
 
+def get_instance_port(path):
+    line = None
+    cmd = 'grep instance1-http %s/port.cfg|cut -d" " -f 3' % path
+    (out, err, code) = runCommand(cmd)
+    for line in out:
+        line = line.strip('\n')
+        try:
+            int(line)
+        except ValueError:
+            continue
+        break
+    else:
+        error("Cannot extract instance1-http from '%s/port.cfg'" % path)
+    return line
+
+
 def run_spv(bldt, command, processes):
     for proc in processes:
         cmd = 'supervisorctl %s %s-%s' % (command, bldt, proc)
@@ -87,7 +112,8 @@ def run_spv(bldt, command, processes):
             verbose("=> Will be run '%s'" % cmd)
 
 
-def run_buildout(bldt, path):
+def run_buildout(buildouts, bldt):
+    path = buildouts[bldt]['path']
     os.chdir(path)
     cmd = 'bin/buildout -N'
     code = 0
@@ -103,7 +129,8 @@ def run_buildout(bldt, path):
     return code
 
 
-def run_make(buildouts, bldt, path, make):
+def run_make(buildouts, bldt, make):
+    path = buildouts[bldt]['path']
     os.chdir(path)
     cmd = 'make %s' % make
     if instance != 'instance-debug':
@@ -121,10 +148,10 @@ def run_make(buildouts, bldt, path, make):
     return code
 
 
-def run_function(path, fct, params, script=function_script):
+def run_function(buildouts, bldt, fct, params, script=function_script):
+    path = buildouts[bldt]['path']
     os.chdir(path)
-    plone = get_plone_site(path)
-    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, script, fct, params)
+    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, buildouts[bldt]['plone'], script, fct, params)
     code = 0
     if doit:
         start = datetime.now()
@@ -174,6 +201,24 @@ def compile_warning(i, params):
     warning_ids.insert(i, id)
 
 
+def email(buildouts, recipient):
+    hostname = socket.gethostname()
+    lanhost = hostname.replace('.imio.be', '.lan.imio.be')
+    output = []
+    for bldt in sorted(buildouts.keys()):
+        if 'port' not in buildouts[bldt]:
+            continue
+        output.append("Buildout '{0}': http://{1}:{2}/manage_main".format(bldt, lanhost, buildouts[bldt]['port']))
+    msg = MIMEText('\n'.join(output), 'plaintext', 'utf-8')
+    sender = 'zope@{}'.format(hostname)
+    msg['From'] = sender
+    msg['To'] = recipient
+    msg['Subject'] = 'imio.updates finished on {}'.format(hostname)
+    s = smtplib.SMTP('localhost')
+    s.sendmail(sender, [recipient], msg.as_string())
+    s.close()
+
+
 def main():
     global doit, pattern, instance, stop, restart, warning_first_pass
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
@@ -207,6 +252,8 @@ def main():
                              ' * 1 : enable only'
                              ' * 8 : disable before make or function and enable after (default)'
                              ' * 9 : don''t do anything')
+    parser.add_argument('-e', '--email', dest='email',
+                        help='Email address used to send an email when finished')
     parser.add_argument('-w', '--warning', nargs='+', dest='warnings', action='append', default=[],
                         help='Create or update a message. Parameters like xx="string value".'
                              ' All parameters must be enclosed by quotes: \'xx="val" yy=True\'.'
@@ -245,44 +292,49 @@ def main():
             error("Path '%s' doesn't exist" % path)
             continue
 
+        buildouts[bldt]['path'] = path
+        buildouts[bldt]['plone'] = get_plone_site(path)
+        buildouts[bldt]['port'] = get_instance_port(path)
+
         verbose("Buildout %s" % path)
         if stop:
             if stop == 'i':
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt] if p.startswith('instance')]))
+                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('instance')]))
             elif stop == 'a':
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]]))
+                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
             elif stop == 'w':
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt] if p.startswith('worker')]))
+                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('worker')]))
         if buildout:
-            if run_buildout(bldt, path):
+            if run_buildout(buildouts, bldt):
                 continue
         if restart:
             if restart == 'i':
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('instance')])
+                run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')])
             elif restart == 'a':
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt]])
+                run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv']])
             elif restart == 'w':
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p.startswith('worker')])
+                run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('worker')])
 
-        if 'zeoserver' not in buildouts[bldt]:
+        if 'zeoserver' not in buildouts[bldt]['spv']:
             error("Zeoserver isn't running")
             continue
 
         if auth == '0' or (auth == '8' and (make or functions)):
-            run_function(path, 'auth', '0')
+            run_function(buildouts, bldt, 'auth', '0')
 
         if make:
             for param_list in make:
-                run_make(buildouts, bldt, path, ' '.join(param_list))
+                run_make(buildouts, bldt, ' '.join(param_list))
 
         if ns.custom:
             for param_list in ns.custom:
                 # function is optional or can be a param so we need to handle it
-                run_function(path=path, script=param_list[0], fct=''.join(param_list[1:2]), params=' '.join(param_list[2:]))
+                run_function(buildouts, bldt, script=param_list[0], fct=''.join(param_list[1:2]),
+                             params=' '.join(param_list[2:]))
 
         if functions:
             for param_list in functions:
-                run_function(path, param_list[0], ' '.join(param_list[1:]))
+                run_function(buildouts, bldt, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
             if warning_first_pass:
@@ -291,9 +343,12 @@ def main():
                 warning_first_pass = False
             if not warning_errors:
                 for id in warning_ids:
-                    run_function(path, 'message', '%s %s' % (id, warning_file))
+                    run_function(buildouts, bldt, 'message', '%s %s' % (id, warning_file))
 
         if auth == '1' or (auth == '8' and (make or functions)):
-            run_function(path, 'auth', '1')
+            run_function(buildouts, bldt, 'auth', '1')
+
+    if ns.email and doit:
+        email(buildouts, ns.email)
 
     verbose("Script duration: %s" % (datetime.now() - start))
