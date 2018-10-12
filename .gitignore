@@ -2,5 +2,9 @@ bin/*
 include/
 lib/
 log_update_instances.txt
-
+.idea/
 !update_instances.sh
+*.pyc
+share/
+pip-selfcheck.json
+src/imio.updates.egg-info/
