@@ -277,7 +277,8 @@ def main():
 
         if ns.custom:
             for param_list in ns.custom:
-                run_function(path=path, script=param_list[0], fct=param_list[1:2], params=' '.join(param_list[2:]))
+                # function is optional or can be a param so we need to handle it
+                run_function(path=path, script=param_list[0], fct=''.join(param_list[1:2]), params=' '.join(param_list[2:]))
 
         if functions:
             for param_list in functions:
