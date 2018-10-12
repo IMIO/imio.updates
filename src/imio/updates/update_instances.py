@@ -181,12 +181,6 @@ def main():
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
     parser.add_argument('-p', '--pattern', dest='pattern',
                         help='Buildout directory filter with PATTERN as re pattern matching')
-    parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='8',
-                        help='Enable/disable authentication plugins:'
-                             ' * 0 : disable only'
-                             ' * 1 : enable only'
-                             ' * 8 : disable before make or function and enable after (default)'
-                             ' * 9 : don''t do anything')
     parser.add_argument('-m', '--make', nargs='+', dest='make', action='append', default=[],
                         help="Run 'make MAKE...' command")
     parser.add_argument('-f', '--function', nargs='+', dest='functions', action='append', default=[],
@@ -196,17 +190,6 @@ def main():
                              " * upgrade `profile`"
                              " * upgrade `_all_`"
                         )
-    parser.add_argument('-w', '--warning', nargs='+', dest='warnings', action='append', default=[],
-                        help='Create or update a message. Parameters like xx="string value".'
-                             ' All parameters must be enclosed by quotes: \'xx="val" yy=True\'.'
-                             ' Following parameters are possible:'
-                             ' * id="maintenance-soon"'
-                             ' * text="A maintenance operation will be done at 4pm."'
-                             ' * activate=True'
-                             ' * ...'
-                        )
-    parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
-                        help='instance name used to run function or make (default instance-debug)')
     parser.add_argument('-s', '--superv', dest='superv',
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
                         help="To run supervisor command:"
@@ -216,6 +199,23 @@ def main():
                              " * restartall : restart all processes after buildout."
                              " * stopworker : stop the worker instances first (not zeo) and restart it after buildout."
                              " * restartworker : restart the worker instances after buildout.")
+    parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
+                        help='instance name used to run function or make (default instance-debug)')
+    parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='8',
+                        help='Enable/disable authentication plugins:'
+                             ' * 0 : disable only'
+                             ' * 1 : enable only'
+                             ' * 8 : disable before make or function and enable after (default)'
+                             ' * 9 : don''t do anything')
+    parser.add_argument('-w', '--warning', nargs='+', dest='warnings', action='append', default=[],
+                        help='Create or update a message. Parameters like xx="string value".'
+                             ' All parameters must be enclosed by quotes: \'xx="val" yy=True\'.'
+                             ' Following parameters are possible:'
+                             ' * id="maintenance-soon"'
+                             ' * text="A maintenance operation will be done at 4pm."'
+                             ' * activate=True'
+                             ' * ...'
+                        )
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
 #    parser.add_argument('-w', '--warn', nargs='+', dest='messages', action='append', default=[],
 #                        help="Update a message in viewlet")

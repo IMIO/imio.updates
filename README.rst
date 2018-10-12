@@ -22,13 +22,6 @@ List of available parameters:
 * -d, --doit : to apply changes
 * -p val, --pattern=val : buildout directory filter with val as re pattern matching
 * -b, --buildout : to run buildout
-* -a, --auth : enable/disable authentication plugins
-
-  * 0 : disable only
-  * 1 : enable only
-  * 8 : disable before make or function and enable after (default)
-  * 9 : don't do anything
-
 * -m val, --make=val : run 'make val' command (can use multiple times -m)
 * -i val, --instance=val : instance name used to run function or make (default instance-debug)
 * -f, --function : run a predefined function with arguments. (can use multiple times -f)
@@ -37,6 +30,22 @@ List of available parameters:
   *     step ``profile-name`` _all_ : run all steps for the given profile
   *     upgrade ``profile-name`` : run the upgrade steps for the given profile
   *     upgrade _all_ : run the upgrade steps for all profiles
+
+* -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
+
+  * 	stop : stop the instances first (not zeo) and restart it after buildout
+  * 	restart : restart the instances after buildout
+  * 	stopall : stop all buildout processes first and restart it after buildout
+  * 	restartall : restart all processes after buildout
+  *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
+  *     restartworker : restart the worker instances after buildout
+
+* -a, --auth : enable/disable authentication plugins
+
+  * 0 : disable only
+  * 1 : enable only
+  * 8 : disable before make or function and enable after (default)
+  * 9 : don't do anything
 
 * -w, --warning : create or update a message. Parameters like xx="string value". All parameters must be enclosed by quotes: 'xx="val" yy=True'.
 
@@ -48,16 +57,7 @@ List of available parameters:
   * start, end="YYYYMMDD-hhmm"
   * ...
 
-* -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
-
-  * 	stop : stop the instances first (not zeo) and restart it after buildout
-  * 	restart : restart the instances after buildout
-  * 	stopall : stop all buildout processes first and restart it after buildout
-  * 	restartall : restart all processes after buildout
-  *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
-  *     restartworker : restart the worker instances after buildout
-
-* -c, --custom : run a custom script with arguments. 
+* -c, --custom : run a custom script with arguments.
 
   * First parameter is the relative path from your buildout to the script file.
   * Other parameters are arguments to be given to the script when called.
