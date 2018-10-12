@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+from email.MIMEMultipart import MIMEMultipart
 from email.mime.text import MIMEText
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
@@ -209,11 +210,12 @@ def email(buildouts, recipient):
         if 'port' not in buildouts[bldt]:
             continue
         output.append("Buildout '{0}': http://{1}:{2}/manage_main".format(bldt, lanhost, buildouts[bldt]['port']))
-    msg = MIMEText('\n'.join(output), 'plaintext', 'utf-8')
+    msg = MIMEMultipart()
     sender = 'zope@{}'.format(hostname)
     msg['From'] = sender
     msg['To'] = recipient
     msg['Subject'] = 'imio.updates finished on {}'.format(hostname)
+    msg.attach(MIMEText('\n'.join(output)))
     s = smtplib.SMTP('localhost')
     s.sendmail(sender, [recipient], msg.as_string())
     s.close()
