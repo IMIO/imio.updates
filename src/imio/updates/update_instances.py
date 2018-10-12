@@ -121,7 +121,7 @@ def run_make(buildouts, bldt, path, make):
     return code
 
 
-def run_function(path, fct, params, script = function_script):
+def run_function(path, fct, params, script=function_script):
     os.chdir(path)
     plone = get_plone_site(path)
     cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, plone, script, fct, params)
@@ -277,7 +277,7 @@ def main():
 
         if ns.custom:
             for param_list in ns.custom:
-                run_function(path=path, script=param_list[0], fct=param_list[1], params=' '.join(param_list[2:]))
+                run_function(path=path, script=param_list[0], fct=param_list[1:2], params=' '.join(param_list[2:]))
 
         if functions:
             for param_list in functions:
