@@ -91,7 +91,7 @@ def run_upgrade():
         mig.upgradeAll()
     else:
         verbose('Running "%s" upgrade on %s' % (profile, obj.absolute_url_path()))
-        mig.upgradeProfile(profile)
+        mig.upgradeProfile(profile, olds=(len(sys.argv) >= 5 and sys.argv[5:] or []))
     transaction.commit()
 
 

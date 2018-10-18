@@ -140,9 +140,9 @@ def run_make(buildouts, bldt, make):
     if doit:
         start = datetime.now()
         verbose("=> Running '%s'" % cmd)
-        (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
+        (out, err, code) = runCommand(cmd, outfile=(make != 'upgrade' and '%s/make.log' % path or None))
         if code:
-            error("Problem running make: see %s/make.log file" % path)
+            error("Problem running make: see %s/make.log file (or var/log/upgrade.log for make upgrade)" % path)
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
         verbose("=> Will be run '%s'" % cmd)
@@ -235,6 +235,7 @@ def main():
                              " * step `profile` `step`"
                              " * step `profile` `_all_`"
                              " * upgrade `profile`"
+                             " * upgrade `profile` `1000` `1001`"
                              " * upgrade `_all_`"
                         )
     parser.add_argument('-s', '--superv', dest='superv',
