@@ -29,7 +29,7 @@ List of available parameters:
   *     step ``profile-name`` ``step-name`` : run the given step for the given profile
   *     step ``profile-name`` _all_ : run all steps for the given profile
   *     upgrade ``profile-name`` : run the upgrade steps for the given profile
-  *     upgrade ``profile-name`` ``dest1`` ``dest2``: run the upgrade steps for the given profile and the given steps
+  *     upgrade ``profile-name`` ``dest1`` ``dest2``: run the given upgrade steps for the given profile
   *     upgrade _all_ : run the upgrade steps for all profiles
 
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
