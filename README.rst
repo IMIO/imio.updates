@@ -34,11 +34,11 @@ List of available parameters:
 
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
 
-  * 	stop : stop the instances first (not zeo) and restart it after buildout
+  * 	stop : stop the instances (not zeo)
   * 	restart : restart the instances after buildout
-  * 	stopall : stop all buildout processes first and restart it after buildout
+  * 	stopall : stop all buildout processes
   * 	restartall : restart all processes after buildout
-  *     stopworker : stop the worker instances first (not zeo) and restart it after buildout
+  *     stopworker : stop the worker instances
   *     restartworker : restart the worker instances after buildout
 
 * -a, --auth : enable/disable authentication plugins
