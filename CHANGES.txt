@@ -4,6 +4,8 @@ Changelog
 0.2 (unreleased)
 ----------------
 
+- Managed stop and start separately
+  [sgeulette]
 - Added new parameters to run functions like import step or upgrade step.
   [sgeulette]
 - Added new parameter to manage authentication plugins

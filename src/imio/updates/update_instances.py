@@ -44,6 +44,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
+    #out = ['project-zeoserver\n', 'project-instance1\n']
     #out = ['project-instance1\n']
     buildouts = {}
     # getting buildout and started programs
@@ -238,14 +239,14 @@ def main():
                              " * upgrade `profile` `1000` `1001`"
                              " * upgrade `_all_`"
                         )
-    parser.add_argument('-s', '--superv', dest='superv',
+    parser.add_argument('-s', '--superv', dest='superv', action='append',
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
                         help="To run supervisor command:"
-                             " * stop : stop the instances first (not zeo) and restart it after buildout."
+                             " * stop : stop the instances (not zeo)."
                              " * restart : restart the instances after buildout."
-                             " * stopall : stop all buildout processes first and restart it after buildout."
+                             " * stopall : stop all buildout processes."
                              " * restartall : restart all processes after buildout."
-                             " * stopworker : stop the worker instances first (not zeo) and restart it after buildout."
+                             " * stopworker : stop the worker instances."
                              " * restartworker : restart the worker instances after buildout.")
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
@@ -274,18 +275,19 @@ def main():
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
-    if ns.superv == 'stop':
-        stop = restart = 'i'
-    elif ns.superv == 'stopall':
-        stop = restart = 'a'
-    elif ns.superv == 'stopworker':
-        stop = restart = 'w'
-    elif ns.superv == 'restart':
-        restart = 'i'
-    elif ns.superv == 'restartall':
-        restart = 'a'
-    elif ns.superv == 'restartworker':
-        restart = 'w'
+    for sv in ns.superv or []:
+        if sv == 'stop':
+            stop = 'i'
+        elif sv == 'stopall':
+            stop = 'a'
+        elif sv == 'stopworker':
+            stop = 'w'
+        elif sv == 'restart':
+            restart = 'i'
+        elif sv == 'restartall':
+            restart = 'a'
+        elif sv == 'restartworker':
+            restart = 'w'
 
     start = datetime.now()
     buildouts = get_running_buildouts()
