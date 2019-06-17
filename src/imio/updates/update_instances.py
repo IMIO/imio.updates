@@ -6,6 +6,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.mime.text import MIMEText
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
+from imio.pyutils.system import read_file
 from imio.pyutils.system import runCommand
 from imio.pyutils.system import verbose
 
@@ -44,7 +45,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-    #out = ['project-zeoserver\n', 'project-instance1\n']
+    #out = ['TAGS/project1.1-1-zeoserver\n', 'TAGS/project1.1-1-instance1\n']
     #out = ['project-instance1\n']
     buildouts = {}
     # getting buildout and started programs
@@ -72,6 +73,35 @@ def get_running_buildouts():
     if escaped:
         verbose("Escaped buildouts: %s" % ', '.join(sorted(escaped)))
     return buildouts
+
+
+def patch_debug(path):
+    idp = os.path.join(path, 'parts/instance-debug/bin/interpreter')
+    if not os.path.exists(idp):
+        error("'{}' doesn't exist: cannot patch it".format(idp))
+        return False
+    if not doit:
+        verbose("=> Will be patched: '{}'".format(idp))
+    else:
+        lines = read_file(idp)
+        if 'ploneCustom.css' not in ''.join(lines):
+            sp = 0
+            for (i, line) in enumerate(lines):
+                if 'exec(_val)' in line:
+                    nl = line.lstrip()
+                    sp = len(line) - len(nl)
+                    break
+            lines.insert(i, "{}{}".format(' ' * sp,
+                                          '_val = _val.replace("\'); from AccessControl.SpecialUsers import system '
+                                          'as user;", "/ploneCustom.css\'); from AccessControl.SpecialUsers import '
+                                          'system as user;")'))
+            verbose("=> Patching: '{}'".format(idp))
+            fh = open(idp, 'w')
+            fh.write('\n'.join(lines))
+            fh.close()
+        else:
+            verbose("=> Already patched: '{}'".format(idp))
+    return True
 
 
 def get_plone_site(path):
@@ -131,10 +161,10 @@ def run_buildout(buildouts, bldt):
     return code
 
 
-def run_make(buildouts, bldt, make):
+def run_make(buildouts, bldt, env, make):
     path = buildouts[bldt]['path']
     os.chdir(path)
-    cmd = 'make %s' % make
+    cmd = '%smake %s' % (env and 'env {} '.format(env) or '', make)
     if instance != 'instance-debug':
         cmd += ' instance=%s' % instance
     code = 0
@@ -150,10 +180,11 @@ def run_make(buildouts, bldt, make):
     return code
 
 
-def run_function(buildouts, bldt, fct, params, script=function_script):
+def run_function(buildouts, bldt, env, fct, params, script=function_script):
     path = buildouts[bldt]['path']
     os.chdir(path)
-    cmd = '%s/bin/%s -O%s run %s %s %s' % (path, instance, buildouts[bldt]['plone'], script, fct, params)
+    cmd = (env and 'env {} '.format(env) or '')
+    cmd += '%s/bin/%s -O%s run %s %s %s' % (path, instance, buildouts[bldt]['plone'], script, fct, params)
     code = 0
     if doit:
         start = datetime.now()
@@ -266,10 +297,13 @@ def main():
                              ' * text="A maintenance operation will be done at 4pm."'
                              ' * activate=True'
                              ' * ...'
-                        )
+                        ),
+    parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
+                        help="Define env variables like XX=YY, used as: env XX=YY make (or function).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
-#    parser.add_argument('-w', '--warn', nargs='+', dest='messages', action='append', default=[],
-#                        help="Update a message in viewlet")
+    parser.add_argument('-z', '--patchdebug', action='store_true', dest='patchdebug',
+                        help='To hack instance-debug. (Needed for Project)')
+
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
@@ -288,6 +322,8 @@ def main():
             restart = 'a'
         elif sv == 'restartworker':
             restart = 'w'
+
+    env = ' '.join(ns.vars)
 
     start = datetime.now()
     buildouts = get_running_buildouts()
@@ -322,24 +358,29 @@ def main():
 
         if 'zeoserver' not in buildouts[bldt]['spv']:
             error("Zeoserver isn't running")
-            continue
+            if not instance:
+                continue
+
+        if ns.patchdebug:
+            if not patch_debug(buildouts[bldt]['path']):
+                continue
 
         if auth == '0' or (auth == '8' and (make or functions)):
-            run_function(buildouts, bldt, 'auth', '0')
+            run_function(buildouts, bldt, '', 'auth', '0')
 
         if make:
             for param_list in make:
-                run_make(buildouts, bldt, ' '.join(param_list))
+                run_make(buildouts, bldt, env, ' '.join(param_list))
 
         if ns.custom:
             for param_list in ns.custom:
                 # function is optional or can be a param so we need to handle it
-                run_function(buildouts, bldt, script=param_list[0], fct=''.join(param_list[1:2]),
+                run_function(buildouts, bldt, env, script=param_list[0], fct=''.join(param_list[1:2]),
                              params=' '.join(param_list[2:]))
 
         if functions:
             for param_list in functions:
-                run_function(buildouts, bldt, param_list[0], ' '.join(param_list[1:]))
+                run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
             if warning_first_pass:
@@ -348,10 +389,10 @@ def main():
                 warning_first_pass = False
             if not warning_errors:
                 for id in warning_ids:
-                    run_function(buildouts, bldt, 'message', '%s %s' % (id, warning_file))
+                    run_function(buildouts, bldt, env, 'message', '%s %s' % (id, warning_file))
 
         if auth == '1' or (auth == '8' and (make or functions)):
-            run_function(buildouts, bldt, 'auth', '1')
+            run_function(buildouts, bldt, '', 'auth', '1')
 
     if ns.email and doit:
         email(buildouts, ns.email)

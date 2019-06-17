@@ -65,6 +65,8 @@ List of available parameters:
   * First parameter is the relative path from your buildout to the script file.
   * Other parameters are arguments to be given to the script when called.
 
+* -v, --vars : Define env variables like XX=YY, used as: env XX=YY make (or function). (can use multiple times -v)
+
 To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
 
 Helper methods
