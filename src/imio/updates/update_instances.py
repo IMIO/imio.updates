@@ -281,7 +281,7 @@ def main():
                              " * restartworker : restart the worker instances after buildout.")
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
-    parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='8',
+    parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='9',
                         help='Enable/disable authentication plugins:'
                              ' * 0 : disable only'
                              ' * 1 : enable only'

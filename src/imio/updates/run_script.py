@@ -8,7 +8,7 @@ import os
 import sys
 import transaction
 
-LOGGER_LEVEL = 30  # 30=warning, 20=info, 10=debug
+LOGGER_LEVEL = 20  # 30=warning, 20=info, 10=debug
 
 
 # Copied from imio.pyutils
