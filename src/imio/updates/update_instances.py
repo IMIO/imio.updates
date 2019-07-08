@@ -311,17 +311,17 @@ def main():
         verbose('Simulation mode: use -h to see script usage.')
     for sv in ns.superv or []:
         if sv == 'stop':
-            stop = 'i'
+            stop += 'i'
         elif sv == 'stopall':
-            stop = 'a'
+            stop += 'a'
         elif sv == 'stopworker':
-            stop = 'w'
+            stop += 'w'
         elif sv == 'restart':
-            restart = 'i'
+            restart += 'i'
         elif sv == 'restartall':
-            restart = 'a'
+            restart += 'a'
         elif sv == 'restartworker':
-            restart = 'w'
+            restart += 'w'
 
     env = ' '.join(ns.vars)
 
@@ -339,21 +339,21 @@ def main():
 
         verbose("Buildout %s" % path)
         if stop:
-            if stop == 'i':
+            if 'i' in stop:
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('instance')]))
-            elif stop == 'a':
+            if 'a' in stop:
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
-            elif stop == 'w':
+            if 'w' in stop:
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('worker')]))
         if buildout:
             if run_buildout(buildouts, bldt):
                 continue
         if restart:
-            if restart == 'i':
+            if 'i' in restart:
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')])
-            elif restart == 'a':
+            if 'a' in restart:
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv']])
-            elif restart == 'w':
+            if 'w' in restart:
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('worker')])
 
         if 'zeoserver' not in buildouts[bldt]['spv']:
