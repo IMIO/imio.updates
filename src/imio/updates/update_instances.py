@@ -309,19 +309,6 @@ def main():
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
-    for sv in ns.superv or []:
-        if sv == 'stop':
-            stop += 'i'
-        elif sv == 'stopall':
-            stop += 'a'
-        elif sv == 'stopworker':
-            stop += 'w'
-        elif sv == 'restart':
-            restart += 'i'
-        elif sv == 'restartall':
-            restart += 'a'
-        elif sv == 'restartworker':
-            restart += 'w'
 
     env = ' '.join(ns.vars)
 
@@ -393,6 +380,20 @@ def main():
 
         if auth == '1' or (auth == '8' and (make or functions)):
             run_function(buildouts, bldt, '', 'auth', '1')
+
+    for sv in ns.superv or []:
+        if sv == 'stop':
+            stop += 'i'
+        elif sv == 'stopall':
+            stop += 'a'
+        elif sv == 'stopworker':
+            stop += 'w'
+        elif sv == 'restart':
+            restart += 'i'
+        elif sv == 'restartall':
+            restart += 'a'
+        elif sv == 'restartworker':
+            restart += 'w'
 
     if ns.email and doit:
         email(buildouts, ns.email)
