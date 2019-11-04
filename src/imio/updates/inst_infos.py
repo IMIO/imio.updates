@@ -33,9 +33,9 @@ load_var(dumpfile, maindic)
 portal = obj
 
 # get first parameter
-tool = ''
-if len(sys.argv) > 1:
-    tool = sys.argv[1]
+tool = sys.argv[-1]
+if tool not in types_to_count.keys():
+    tool = ''
 
 # get types count
 lengths = dict(portal.portal_catalog.Indexes['portal_type'].uniqueValues(withLengths=True))
