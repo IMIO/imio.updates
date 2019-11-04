@@ -42,8 +42,14 @@ lengths = dict(portal.portal_catalog.Indexes['portal_type'].uniqueValues(withLen
 for typ in types_to_count.get(tool, []):
     infos['types'][typ] = lengths.get(typ, 0)
 
-# get users count
-infos['users'] = len(portal.portal_membership.searchForMembers())
+# get users count, only keep users that are in a group
+users = portal.portal_membership.searchForMembers()
+count = 0
+for user in users:
+    user_groups = user.getGroups()
+    if user_groups and user_groups != ['AuthenticatedUsers']:
+        count = count + 1
+infos['users'] = count
 
 # get groups count
 infos['groups'] = len(api.group.get_groups())
