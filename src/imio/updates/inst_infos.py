@@ -43,7 +43,7 @@ for typ in types_to_count.get(tool, []):
     infos['types'][typ] = lengths.get(typ, 0)
 
 # get users count
-infos['users'] = len(api.user.get_users())
+infos['users'] = len(portal.portal_membership.searchForMembers())
 
 # get groups count
 infos['groups'] = len(api.group.get_groups())

@@ -18,6 +18,9 @@ Changelog
   [sgeulette]
 - Added new parameter to patch instance-debug interpreter. So bin/instance run is possible without Unauthorized.
   [sgeulette]
+- Use portal_membership.searchForUsers to get users from every authentication
+  plugins, including LDAP
+  [gbastien]
 
 0.1 (2018-06-21)
 ----------------
