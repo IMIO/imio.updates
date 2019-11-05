@@ -10,11 +10,21 @@ from Products.CPUtils.Extensions.utils import tobytes
 import os
 import sys
 
-types_to_count = {'dms': ('dmsincomingmail', 'dmsoutgoingmail', 'task', 'organization', 'person', 'held_position',
-                          'dmsommainfile'),
-                  'pst': ('projectspace', 'strategicobjective', 'operationalobjective', 'pstaction', 'pstsubaction',
-                          'task'),
-                  '': ()}
+types_to_count = {
+    'dms':
+    {'portal_type':
+        ('dmsincomingmail', 'dmsoutgoingmail', 'task', 'organization',
+         'person', 'held_position', 'dmsommainfile'), },
+    'pst':
+    {'portal_type':
+        ('projectspace', 'strategicobjective', 'operationalobjective',
+         'pstaction', 'pstsubaction', 'task'), },
+    'pm':
+    {'meta_type':
+        ('Meeting', 'MeetingItem', ),
+     'portal_type':
+        ('annex', 'annexDecision', 'meetingadvice', 'meetingadvicefinances'), },
+}
 
 zopedir = os.path.expanduser("~")
 instdir = os.getenv('PWD')
@@ -38,9 +48,11 @@ if tool not in types_to_count.keys():
     tool = ''
 
 # get types count
-lengths = dict(portal.portal_catalog.Indexes['portal_type'].uniqueValues(withLengths=True))
-for typ in types_to_count.get(tool, []):
-    infos['types'][typ] = lengths.get(typ, 0)
+catalog = portal.portal_catalog
+for index_name, type_names in types_to_count.get(tool, []).items():
+    lengths = dict(catalog.Indexes[index_name].uniqueValues(withLengths=True))
+    for type_name in type_names:
+        infos['types'][type_name] = lengths.get(type_name, 0)
 
 # get users count, only keep users that are in a group
 users = portal.portal_membership.searchForMembers()
