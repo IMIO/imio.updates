@@ -45,7 +45,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-    #out = ['TAGS/project1.1-1-zeoserver\n', 'TAGS/project1.1-1-instance1\n']
+    #out = ['TAGS/dmsmail2.2-zeoserver\n', 'TAGS/dmsmail2.2-instance1\n']
     #out = ['project-instance1\n']
     buildouts = {}
     # getting buildout and started programs
@@ -198,6 +198,21 @@ def run_function(buildouts, bldt, env, fct, params, script=function_script):
     return code
 
 
+def run_develop(buildouts, bldt, products):
+    path = buildouts[bldt]['path']
+    os.chdir(path)
+    cmd = 'bin/develop up -a {}'.format(' '.join(products))
+    code = 0
+    if doit:
+        verbose("=> Running '%s'" % cmd)
+        (out, err, code) = runCommand(cmd)
+        if code:
+            error("Problem running bin/develop: {}".format(err))
+    else:
+        verbose("=> Will be run '%s'" % cmd)
+    return code
+
+
 def compile_warning(i, params):
     global warning_errors
     p_dic = {}
@@ -287,6 +302,8 @@ def main():
                              ' * 1 : enable only'
                              ' * 8 : disable before make or function and enable after (default)'
                              ' * 9 : don''t do anything')
+    parser.add_argument('-u', '--update', nargs='+', dest='develop',
+                        help="Update given development products")
     parser.add_argument('-e', '--email', dest='email',
                         help='Email address used to send an email when finished')
     parser.add_argument('-w', '--warning', nargs='+', dest='warnings', action='append', default=[],
@@ -348,6 +365,8 @@ def main():
         if buildout:
             if run_buildout(buildouts, bldt):
                 continue
+        elif ns.develop:
+            run_develop(buildouts, bldt, ns.develop)
         if restart:
             if 'i' in restart:
                 run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')])

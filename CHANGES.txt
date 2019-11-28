@@ -21,6 +21,8 @@ Changelog
 - Use portal_membership.searchForUsers to get users from every authentication
   plugins, including LDAP
   [gbastien]
+- Added new parameter to update development products
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------

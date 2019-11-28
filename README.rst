@@ -48,6 +48,8 @@ List of available parameters:
   * 8 : disable before make or function and enable after (default)
   * 9 : don't do anything
 
+* -u vals, --update vals: update given development products.
+
 * -e, --email : email address used to get an email when finished
 
 * -w, --warning : create or update a message. Parameters like xx="string value". All parameters must be enclosed by quotes: 'xx="val" yy=True'.
