@@ -275,6 +275,8 @@ def main():
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
     parser.add_argument('-p', '--pattern', dest='pattern',
                         help='Buildout directory filter with PATTERN as re pattern matching')
+    parser.add_argument('-m0', '--make0', nargs='+', dest='make0', action='append', default=[],
+                        help="Run 'make MAKE...' command before a buildout and restart")
     parser.add_argument('-m', '--make', nargs='+', dest='make', action='append', default=[],
                         help="Run 'make MAKE...' command")
     parser.add_argument('-f', '--function', nargs='+', dest='functions', action='append', default=[],
@@ -362,6 +364,11 @@ def main():
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
             if 'w' in stop:
                 run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('worker')]))
+
+        if ns.make0:
+            for param_list in ns.make0:
+                run_make(buildouts, bldt, env, ' '.join(param_list))
+
         if buildout:
             if run_buildout(buildouts, bldt):
                 continue
