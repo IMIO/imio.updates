@@ -139,7 +139,7 @@ def message():
         msg.reindexObject()
 
     try:
-        if params['activate']:
+        if params.get('activate', True):
             api.content.transition(msg, transition='activate')
             verbose("Message %s activated" % msg)
         else:
