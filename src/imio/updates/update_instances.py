@@ -171,9 +171,9 @@ def run_make(buildouts, bldt, env, make):
     if doit:
         start = datetime.now()
         verbose("=> Running '%s'" % cmd)
-        (out, err, code) = runCommand(cmd, outfile=(make != 'upgradeX' and '%s/make.log' % path or None))
+        (out, err, code) = runCommand(cmd, outfile=(make != 'copy' and '%s/make.log' % path or None))
         if code:
-            error("Problem running make: see %s/make.log file (or var/log/upgrade.log for make upgrade)" % path)
+            error("Problem running make: see %s/make.log file" % path)
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
         verbose("=> Will be run '%s'" % cmd)
