@@ -82,7 +82,7 @@ for blobdirname in read_dir(vardir, only_folders=True):
     sizefile = os.path.join(vardir, blobdirname, 'size.txt')
     if os.path.exists(sizefile):
         lines = read_file(sizefile)
-        size = int(lines[0])
+        size = int(lines and lines[0] or 0)
         if size > infos['bl_sz']:
             infos['bl_sz'] = size
             infos['bl_nm'] = blobdirname
