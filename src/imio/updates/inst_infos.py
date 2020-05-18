@@ -21,7 +21,7 @@ types_to_count = {
          'pstaction', 'pstsubaction', 'task'), },
     'pm':
     {'meta_type':
-        ('Meeting', 'MeetingItem', ),
+        ('Meeting', 'MeetingItem', 'MeetingConfig'),
      'portal_type':
         ('annex', 'annexDecision', 'meetingadvice', 'meetingadvicefinances'), },
 }
