@@ -7,6 +7,7 @@ from imio.pyutils.system import read_file
 from plone import api
 from Products.CPUtils.Extensions.utils import tobytes
 
+import json
 import os
 import sys
 
@@ -75,17 +76,30 @@ for db in dbs.getDatabaseNames():
     if size > infos['fs_sz']:
         infos['fs_sz'] = size
 # blobstorage
-vardir = os.path.join(instdir, 'var')
-for blobdirname in read_dir(vardir, only_folders=True):
-    if not blobdirname.startswith('blobstorage'):
-        continue
-    sizefile = os.path.join(vardir, blobdirname, 'size.txt')
-    if os.path.exists(sizefile):
-        lines = read_file(sizefile)
-        size = int(lines and lines[0] or 0)
-        if size > infos['bl_sz']:
-            infos['bl_sz'] = size
-            infos['bl_nm'] = blobdirname
+# .sizes.json
+sizefile = os.path.join(instdir, '.sizes.json')
+try:
+    fh = open(sizefile)
+    res = json.load(fh)
+    fh.close()
+    size = int(res.get(u'local_size', 0))
+    if size > infos['fs_sz']:
+        size -= infos['fs_sz']
+        infos['bl_sz'] = size
+except Exception, msg:
+    error(u".sizes.json not valid in '{}': '{}'".format(instdir, msg))
+
+# vardir = os.path.join(instdir, 'var')
+# for blobdirname in read_dir(vardir, only_folders=True):
+#     if not blobdirname.startswith('blobstorage'):
+#         continue
+#     sizefile = os.path.join(vardir, blobdirname, 'size.txt')
+#     if os.path.exists(sizefile):
+#         lines = read_file(sizefile)
+#         size = int(lines and lines[0] or 0)
+#         if size > infos['bl_sz']:
+#             infos['bl_sz'] = size
+#             infos['bl_nm'] = blobdirname
 
 # dump dictionary
 maindic['inst'].update(dic)
