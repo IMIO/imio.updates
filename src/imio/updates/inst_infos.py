@@ -2,9 +2,10 @@
 # Run by imio.updates or with bin/instance1 -Ostavelot run imio.updates/src/imio/updates/inst_infos.py dms
 
 from imio.pyutils.system import dump_var
+from imio.pyutils.system import error
 from imio.pyutils.system import load_var
-from imio.pyutils.system import read_dir
-from imio.pyutils.system import read_file
+# from imio.pyutils.system import read_dir
+# from imio.pyutils.system import read_file
 from plone import api
 from Products.CPUtils.Extensions.utils import tobytes
 
@@ -42,7 +43,7 @@ infos = dic[inst]
 load_var(dumpfile, maindic)
 
 # obj is the portal site
-portal = obj
+portal = obj  # noqa F821
 
 # get first parameter
 tool = sys.argv[-1]
@@ -53,6 +54,7 @@ if tool not in types_to_count.keys():
 catalog = portal.portal_catalog
 for index_name, type_names in types_to_count.get(tool, []).items():
     lengths = dict(catalog.Indexes[index_name].uniqueValues(withLengths=True))
+
     for type_name in type_names:
         infos['types'][type_name] = lengths.get(type_name, 0)
 
@@ -75,7 +77,7 @@ infos['groups'] = len(api.group.get_groups())
 
 # sizes. app is zope
 # filestorage
-dbs = app['Control_Panel']['Database']
+dbs = app['Control_Panel']['Database']  # noqa F821
 for db in dbs.getDatabaseNames():
     size = dbs[db].db_size()
     size = int(tobytes(size[:-1] + ' ' + size[-1:] + 'B'))
