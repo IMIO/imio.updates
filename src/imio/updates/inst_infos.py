@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Run by imio.updates or with bin/instance1 -Ostavelot run imio.updates/src/imio/updates/inst_infos.py dms
 
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import load_var
@@ -34,7 +35,7 @@ maindic = {}
 
 # get instance name
 inst = instdir.split('/')[-1]
-dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'bl_nm': '', 'fs_sz': 0, 'bl_sz': 0}}
+dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}}}
 infos = dic[inst]
 
 # get dumped dictionary
@@ -55,8 +56,13 @@ for index_name, type_names in types_to_count.get(tool, []).items():
     for type_name in type_names:
         infos['types'][type_name] = lengths.get(type_name, 0)
 
+# checks
+if tool == 'dms':
+    for key in ('imail_group_encoder', 'omail_group_encoder', 'contact_group_encoder'):
+        val = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.{}'.format(key)))
+        infos['checks'][key.replace('group_encoder', 'ge')] = val
 # get users count, only keep users that are in a group
-users = portal.portal_membership.searchForMembers()
+users = portal.portal_membership.searchForMembers()  # ok with wca
 count = 0
 for user in users:
     user_groups = user.getGroups()
