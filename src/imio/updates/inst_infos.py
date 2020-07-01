@@ -59,6 +59,10 @@ for index_name, type_names in types_to_count.get(tool, []).items():
         infos['types'][type_name] = lengths.get(type_name, 0)
 
 # checks
+if tool == 'pm':
+    brains = catalog(meta_type='MeetingConfig')
+    infos['checks']['classifier'] = len(portal.reference_catalog(relationship='ItemClassification'))
+
 if tool == 'dms':
     for key in ('imail_group_encoder', 'omail_group_encoder', 'contact_group_encoder'):
         val = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.{}'.format(key)))
@@ -110,5 +114,8 @@ except Exception, msg:
 #             infos['bl_nm'] = blobdirname
 
 # dump dictionary
+if 'inst' not in maindic:
+    maindic['inst'] = {}
+
 maindic['inst'].update(dic)
 dump_var(dumpfile, maindic)
