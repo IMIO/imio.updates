@@ -36,7 +36,7 @@ maindic = {}
 
 # get instance name
 inst = instdir.split('/')[-1]
-dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}}}
+dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}, 'admins': []}}
 infos = dic[inst]
 
 # get dumped dictionary
@@ -67,6 +67,7 @@ if tool == 'dms':
     for key in ('imail_group_encoder', 'omail_group_encoder', 'contact_group_encoder'):
         val = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.{}'.format(key)))
         infos['checks'][key.replace('group_encoder', 'ge')] = val
+
 # get users count, only keep users that are in a group
 users = portal.portal_membership.searchForMembers()  # ok with wca
 count = 0
@@ -74,6 +75,9 @@ for user in users:
     user_groups = user.getGroups()
     if user_groups and user_groups != ['AuthenticatedUsers']:
         count = count + 1
+    if user.has_role('Manager') or user.has_role('Site Administrator'):
+        if user.getProperty('email') not in infos['admins']:
+            infos['admins'].append(user.getProperty('email'))
 infos['users'] = count
 
 # get groups count
