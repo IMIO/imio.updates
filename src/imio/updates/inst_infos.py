@@ -7,6 +7,7 @@ from imio.pyutils.system import load_var
 # from imio.pyutils.system import read_dir
 # from imio.pyutils.system import read_file
 from plone import api
+from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
 
 import json
@@ -67,6 +68,16 @@ if tool == 'dms':
     for key in ('imail_group_encoder', 'omail_group_encoder', 'contact_group_encoder'):
         val = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.{}'.format(key)))
         infos['checks'][key.replace('group_encoder', 'ge')] = val
+
+if tool == 'pst':
+    from imio.project.core.content.project import IProject  # noqa
+    count = 0
+    brains = catalog.unrestrictedSearchResults(object_provides=IProject.__identifier__)
+    for brain in brains:
+        obj = brain.getObject()
+        if base_hasattr(obj, 'analytic_budget') and obj.analytic_budget:
+            count += 1
+    infos['checks']['budget'] = count
 
 # get users count, only keep users that are in a group
 users = portal.portal_membership.searchForMembers()  # ok with wca
