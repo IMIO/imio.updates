@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Run by imio.updates or with bin/instance1 -Ostavelot run imio.updates/src/imio/updates/inst_infos.py dms
-
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import load_var
@@ -68,6 +67,9 @@ if tool == 'dms':
     for key in ('imail_group_encoder', 'omail_group_encoder', 'contact_group_encoder'):
         val = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.{}'.format(key)))
         infos['checks'][key.replace('group_encoder', 'ge')] = val
+    from collective.wfadaptations.api import get_applied_adaptations
+    applied = ', '.join([d['adaptation'] for d in get_applied_adaptations()])
+    infos['checks']['wfadaptations'] = applied
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa

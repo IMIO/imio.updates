@@ -23,6 +23,8 @@ Changelog
   [gbastien]
 - Added new parameter to update development products
   [sgeulette]
+- Added inst_infos module to get site information
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------
