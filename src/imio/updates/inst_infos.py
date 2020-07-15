@@ -64,12 +64,17 @@ if tool == 'pm':
     infos['checks']['classifier'] = len(portal.reference_catalog(relationship='ItemClassification'))
 
 if tool == 'dms':
+    # get group encoder options
     for key in ('imail_group_encoder', 'omail_group_encoder', 'contact_group_encoder'):
         val = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.{}'.format(key)))
         infos['checks'][key.replace('group_encoder', 'ge')] = val
+    # get applied workflow adaptations
     from collective.wfadaptations.api import get_applied_adaptations
     applied = ', '.join([d['adaptation'] for d in get_applied_adaptations()])
     infos['checks']['wfadaptations'] = applied
+    # get assigned_user option
+    infos['checks']['assigned_user'] = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.'
+                                                                          'IImioDmsMailConfig.assigned_user_check'))
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
