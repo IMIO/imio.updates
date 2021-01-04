@@ -73,8 +73,8 @@ if tool == 'dms':
     applied = ', '.join([d['adaptation'] for d in get_applied_adaptations()])
     infos['checks']['wfadaptations'] = applied
     # get assigned_user option
-    infos['checks']['assigned_user'] = int(api.portal.get_registry_record('imio.dms.mail.browser.settings.'
-                                                                          'IImioDmsMailConfig.assigned_user_check'))
+    infos['checks']['assigned_user'] = api.portal.get_registry_record('imio.dms.mail.browser.settings.'
+                                                                      'IImioDmsMailConfig.assigned_user_check')
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
