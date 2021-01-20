@@ -5,6 +5,7 @@ log_update_instances.txt
 .idea/
 !update_instances.sh
 *.pyc
+local/
 share/
 pip-selfcheck.json
 src/imio.updates.egg-info/
