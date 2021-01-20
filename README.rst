@@ -101,11 +101,14 @@ To deploy this package
 * git clone https://github.com/IMIO/imio.updates.git
 * cd imio.updates
 * virtualenv-2.7 .
-* bin/pip install setuptools==41.0.1
-* bin/pip install --trusted-host devpi.imio.be --extra-index-url https://devpi.imio.be/root/imio/+simple -e .
-
-(if problem with imio.pyutils: bin/pip install -f https://devpi.imio.be/root/imio/+simple/imio.pyutils imio.pyutils)
+* (bin/pip install setuptools==41.0.1)
+* bin/pip install -e .
 
 or
 
 * bin/python setup.py develop
+
+Previously:
+
+* bin/pip install --trusted-host devpi.imio.be --extra-index-url https://devpi.imio.be/root/imio/+simple -e .
+* if problem with imio.pyutils: bin/pip install -f https://devpi.imio.be/root/imio/+simple/imio.pyutils imio.pyutils
