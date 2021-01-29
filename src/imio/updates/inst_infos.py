@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Run by imio.updates or with bin/instance1 -Ostavelot run imio.updates/src/imio/updates/inst_infos.py dms
+# Run by imio.updates : bin/update_instances -c ~/imio.updates/src/imio/updates/inst_infos.py dms
+# or with bin/instance1 -Ostavelot run imio.updates/src/imio/updates/inst_infos.py dms
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import load_var
@@ -91,6 +92,12 @@ if tool == 'dms':
                                                                       'IImioDmsMailConfig.assigned_user_check')
     # get wsclient option
     infos['checks']['pm'] = int(check_wsclient())
+    # get query next prev max result value
+    infos['checks']['qnp'] = int(api.portal.get_registry_record('collective.querynextprev.maxresults') or 0)
+    # temporary
+    types = api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.omail_types') or []
+    # TODO in dms 3.0 mt_title => dtitle
+    infos['checks']['omt'] = ', '.join([tdic['mt_title'] for tdic in types])
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
