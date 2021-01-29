@@ -25,6 +25,8 @@ Changelog
   [sgeulette]
 - Added inst_infos module to get site information
   [sgeulette]
+- Added Makefile to setup or cleanall
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------
