@@ -11,3 +11,4 @@ setup:
 .PHONY: cleanall
 cleanall:
 	rm -fr bin include lib local share
+	git checkout bin
