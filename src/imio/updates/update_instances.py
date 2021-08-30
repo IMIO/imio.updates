@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-from email.MIMEMultipart import MIMEMultipart
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
@@ -226,7 +226,7 @@ def compile_warning(i, params):
         for part in regex.findall(param):
             try:
                 p_dic.update(eval('dict(%s)' % part))
-            except Exception, msg:
+            except Exception as msg:
                 error("Problem in -w with param '%s': %s" % (part, msg))
                 warning_errors = True
     verbose("Message parameters: %s" % p_dic)
@@ -239,7 +239,7 @@ def compile_warning(i, params):
         if dt in p_dic:
             try:
                 p_dic[dt] = datetime.strptime(p_dic[dt], '%Y%m%d-%H%M')
-            except ValueError, msg:
+            except ValueError as msg:
                 error("Cannot compile datetime '%s' : %s" % (p_dic[dt], msg))
                 warning_errors = True
 

@@ -3,9 +3,9 @@
 
 .PHONY: setup
 setup:
-	virtualenv-2.7 .
+	virtualenv -p python2 .
 	./bin/pip install --upgrade pip
-	./bin/pip install -e .
+	./bin/pip install -r requirements.txt -e .
 	./bin/update_instances
 
 .PHONY: cleanall
