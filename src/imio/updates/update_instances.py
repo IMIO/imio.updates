@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+import shutil
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -44,9 +44,9 @@ def get_running_buildouts():
     """ Get running buildouts and instances"""
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
-    #out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-    #out = ['TAGS/dmsmail2.2-zeoserver\n', 'TAGS/dmsmail2.2-instance1\n']
-    #out = ['project-instance1\n']
+    # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
+    # out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
+    # out = ['dmsmail_solr-instance1\n']
     buildouts = {}
     # getting buildout and started programs
     for name in out:
@@ -102,6 +102,39 @@ def patch_debug(path):
         else:
             verbose("=> Already patched: '{}'".format(idp))
     return True
+
+
+def patch_indexing(path):
+    """Avoid monkey patch to not queue indexation operations"""
+    cip = os.path.join(path, 'parts/omelette/collective/indexing/monkey.py')
+    if not os.path.exists(cip):
+        error("'{}' doesn't exist: cannot patch it".format(cip))
+        return False
+    if not doit:
+        verbose("=> Will be patched: '{}'".format(cip))
+    else:
+        cipbck = cip + '.bck'
+        cmd = "sed -i'' '/^ \\+module.indexObject =/,+3 s/^/#/' {}".format(cip)
+        if not os.path.exists(cipbck):
+            cmd = cmd.replace("sed -i'' ", "sed -i'.bck' ")
+        (out, err, code) = runCommand(cmd)
+        if code or err:
+            error("Problem patching indexing: {}".format(err))
+            return False
+    return True
+
+
+def unpatch_indexing(path):
+    """Undo patch_indexing"""
+    cip = os.path.join(path, 'parts/omelette/collective/indexing/monkey.py')
+    cipbck = cip + '.bck'
+    if not os.path.exists(cipbck):
+        error("'{}' doesn't exist: cannot unpatch it".format(cipbck))
+        return False
+    if not doit:
+        verbose("=> Will be unpatched: '{}'".format(cip))
+    else:
+        shutil.copy2(cipbck, cip)
 
 
 def get_plone_site(path):
@@ -320,6 +353,8 @@ def main():
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
+    parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
+                        help='To hack collective.indexing.monkey, to keep direct indexation during operations')
     parser.add_argument('-z', '--patchdebug', action='store_true', dest='patchdebug',
                         help='To hack instance-debug. (Needed for Project)')
 
@@ -391,6 +426,10 @@ def main():
             if not patch_debug(buildouts[bldt]['path']):
                 continue
 
+        if ns.patchindexing:
+            if not patch_indexing(buildouts[bldt]['path']):
+                continue
+
         if auth == '0' or (auth == '8' and (make or functions)):
             run_function(buildouts, bldt, '', 'auth', '0')
 
@@ -416,6 +455,9 @@ def main():
             if not warning_errors:
                 for id in warning_ids:
                     run_function(buildouts, bldt, env, 'message', '%s %s' % (id, warning_file))
+
+        if ns.patchindexing:
+            unpatch_indexing(buildouts[bldt]['path'])
 
         if auth == '1' or (auth == '8' and (make or functions)):
             run_function(buildouts, bldt, '', 'auth', '1')
