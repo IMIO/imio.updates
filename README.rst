@@ -100,7 +100,8 @@ To deploy this package
 
 * git clone https://github.com/IMIO/imio.updates.git
 * cd imio.updates
-* virtualenv-2.7 .
+* virtualenv -p python2 . (if packages python2 and virtualenv are installed)
+* (or virtualenv-2.7 . (if python2 manually compiled))
 * (bin/pip install setuptools==41.0.1)
 * bin/pip install -e .
 
