@@ -24,7 +24,7 @@ def export_infos():
     ret = portal.manage_exportObject(id='acl_users')
 
 
-def import_infos()
+def import_infos():
     portal = obj
 
 
