@@ -9,9 +9,9 @@ from plone import api
 from Products.CPUtils.Extensions.utils import store_user_properties
 
 # Parameters check
-if len(sys.argv) < 3 or not sys.argv[2].endswith('run_scripts.py'):
+if len(sys.argv) < 3 or not sys.argv[2].endswith('various_scripts.py'):
     error("Inconsistent or unexpected args len: %s" % sys.argv)
-    sys.exit(0)
+    sys.exit('Inconsistent args')
 
 setup_logger()
 
@@ -34,7 +34,7 @@ scripts = {'export_infos': export_infos}
 if len(sys.argv) < 4 or sys.argv[3] not in scripts:
     error("Bad script parameter")
     verbose('\n>> =>'.join(info))
-    sys.exit(0)
+    sys.exit('Bad script parameter')
 
 with api.env.adopt_user(username='admin'):
     scripts[sys.argv[3]]()
