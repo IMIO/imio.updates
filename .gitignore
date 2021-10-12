@@ -8,4 +8,5 @@ log_update_instances.txt
 local/
 share/
 pip-selfcheck.json
+pyvenv.cfg
 src/imio.updates.egg-info/
