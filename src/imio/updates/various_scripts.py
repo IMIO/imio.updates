@@ -33,8 +33,6 @@ def import_infos():
     from OFS.Folder import manage_addFolder
     if 'oldacl' not in portal:
         manage_addFolder(portal, 'oldacl')
-    transaction.commit()
-    return
     oa = portal['oldacl']
     if 'users_properties' not in oa:
         oa.manage_importObject('users_properties.zexp')
