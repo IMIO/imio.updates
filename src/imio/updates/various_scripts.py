@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import re
 import sys
 import transaction
 
@@ -29,18 +30,29 @@ def export_infos():
 
 def import_infos():
     portal = obj
-    transaction.get()
+    from OFS.Folder import manage_addFolder
     if 'oldacl' not in portal:
-        portal.manage_addFolder('oldacl')
+        manage_addFolder(portal, 'oldacl')
     oa = portal['oldacl']
-    # if 'users_properties' not in oa:
-    #     oa.manage_importObject('users_properties.zexp')
-    # if 'acl_users' not in oa:
-    #     oa.manage_importObject('acl_users.zexp')
-    # ret = recreate_users_groups(only_users=True, dochange='1')
-    # verbose(ret)
-    # ret = load_user_properties(portal, dochange='1')
-    # verbose(ret)
+    if 'users_properties' not in oa:
+        oa.manage_importObject('users_properties.zexp')
+    if 'acl_users' not in oa:
+        oa.manage_importObject('acl_users.zexp')
+    ret = recreate_users_groups(portal, only_users=True, dochange='1')
+    users = re.findall('(is added| alredy exists)', ret, re.I)
+    if 'Problem creating user' in ret or not users:
+        error(ret)
+        raise Exception('Error when creating users')
+    verbose(ret)
+    verbose('USERS created: {}'.format(len(users)))
+    ret = load_user_properties(portal, dochange='1')
+    props = re.findall('has changed properties', ret, re.I)
+    verbose(ret)
+    verbose('PROPS updated: {}'.format(len(props)))
+    if len(props) != len(users):
+        error('Users and props doesnt match')
+        raise Exception('Counts doesnt match')
+    transaction.commit()
 
 
 info = ["You can pass following parameters (with the first one always script name):", "export_infos: run ports update"]
