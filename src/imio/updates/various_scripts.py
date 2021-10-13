@@ -24,6 +24,7 @@ def export_infos():
     portal = obj
     ret = store_user_properties(portal)
     verbose(ret)
+    transaction.commit()
     ret = portal.manage_exportObject(id='users_properties')
     ret = portal.manage_exportObject(id='acl_users')
 
