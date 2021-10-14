@@ -20,7 +20,8 @@ if len(sys.argv) < 3 or not sys.argv[2].endswith('various_scripts.py'):
 setup_logger()
 
 
-def export_infos():
+def export_users():
+    """Export acl_users and users_properties file"""
     portal = obj
     ret = store_user_properties(portal)
     verbose(ret)
@@ -29,7 +30,8 @@ def export_infos():
     ret = portal.manage_exportObject(id='acl_users')
 
 
-def import_infos():
+def import_users():
+    """Import acl_users and recreate users with their properties"""
     portal = obj
     from OFS.Folder import manage_addFolder
     if 'oldacl' not in portal:
@@ -56,11 +58,11 @@ def import_infos():
     transaction.commit()
 
 
-info = ["You can pass following parameters (with the first one always script name):", "export_infos: run ports update"]
-scripts = {'export_infos': export_infos, 'import_infos': import_infos}
+scripts = {'export_users': export_users, 'import_users': import_users}
+info = ["You can pass following parameters (with the first one always script name):"]
+info.extend(['"{}": "{}"'.format(k, v.__doc__) for k, v in scripts.items()])
 
 if len(sys.argv) < 4 or sys.argv[3] not in scripts:
-    error("Bad script parameter")
     verbose('\n>> =>'.join(info))
     sys.exit('Bad script parameter')
 
