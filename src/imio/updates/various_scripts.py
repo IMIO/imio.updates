@@ -42,7 +42,7 @@ def import_users():
     if 'acl_users' not in oa:
         oa.manage_importObject('acl_users.zexp')
     ret = recreate_users_groups(portal, only_users=True, dochange='1')
-    users = re.findall('(is added| alredy exists)', ret, re.I)
+    users = re.findall('(is added| already exists)', ret, re.I)
     if 'Problem creating user' in ret or not users:
         error(ret)
         raise Exception('Error when creating users')
