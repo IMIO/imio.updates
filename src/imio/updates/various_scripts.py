@@ -34,13 +34,19 @@ def import_users():
     """Import acl_users and recreate users with their properties"""
     portal = obj
     from OFS.Folder import manage_addFolder
+    commit = False
     if 'oldacl' not in portal:
         manage_addFolder(portal, 'oldacl')
+        commit = True
     oa = portal['oldacl']
     if 'users_properties' not in oa:
         oa.manage_importObject('users_properties.zexp')
+        commit = True
     if 'acl_users' not in oa:
         oa.manage_importObject('acl_users.zexp')
+        commit = True
+    if commit:
+        transaction.commit()
     ret = recreate_users_groups(portal, only_users=True, dochange='1')
     users = re.findall('(is added| already exists)', ret, re.I)
     if 'Problem creating user' in ret or not users:
