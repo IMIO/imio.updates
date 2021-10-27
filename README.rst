@@ -49,7 +49,7 @@ List of available parameters:
   * 8 : disable before make or function and enable after (default)
   * 9 : don't do anything
 
-* -u vals, --update vals: update given development products.
+* -u vals, --update vals : update given development products.
 
 * -e, --email : email address used to get an email when finished
 
@@ -70,7 +70,9 @@ List of available parameters:
 
 * -v, --vars : Define env variables like XX=YY, used as: env XX=YY make (or function). (can use multiple times -v)
 
-* -z, --patchdebug: Used to patch instance-debug if front-page is a dexterity type and not publically accessible
+* -y, --patchindexing : To hack collective.indexing.monkey, to keep direct indexation during operations
+
+* -z, --patchdebug : Used to patch instance-debug if front-page is a dexterity type and not publically accessible
 
 To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
 
@@ -103,11 +105,7 @@ To deploy this package
 * virtualenv -p python2 . (if packages python2 and virtualenv are installed)
 * (or virtualenv-2.7 . (if python2 manually compiled))
 * (bin/pip install setuptools==41.0.1)
-* bin/pip install -e .
-
-or
-
-* bin/python setup.py develop
+* `bin/pip install -e .`  or  `bin/python setup.py develop`
 
 Previously:
 
