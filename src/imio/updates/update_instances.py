@@ -176,7 +176,8 @@ def run_spv(bldt, command, processes, wait=False):
             (out, err, code) = runCommand(cmd)
             if code:
                 error("Problem running supervisor command")
-            elif wait:
+            elif wait and len(processes) > 1:
+                time.sleep(20)
                 for i in range(0, 9):
                     try:
                         response = requests.get('http://localhost:%s/%s/ok' % (bldt['port'], bldt['plone']))
@@ -186,7 +187,7 @@ def run_spv(bldt, command, processes, wait=False):
                             time.sleep(5)
                     except Exception as err:
                         # Don't care the nature of this error
-                        error(err)
+                        error(str(err))
         else:
             verbose("=> Will be run '%s'" % cmd)
 
