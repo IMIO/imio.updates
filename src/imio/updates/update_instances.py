@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import shutil
 import time
-from builtins import ConnectionError
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -185,7 +184,7 @@ def run_spv(bldt, command, processes, wait=False):
                             break
                         else:
                             time.sleep(5)
-                    except (ConnectionError, requests.exceptions.HTTPError) as err:
+                    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as err:
                         error(err)
         else:
             verbose("=> Will be run '%s'" % cmd)
