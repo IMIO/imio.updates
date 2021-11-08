@@ -170,7 +170,7 @@ def get_instance_port(path):
 
 def run_spv(bldt, command, processes, wait=False):
     for proc in processes:
-        cmd = 'supervisorctl %s %s-%s' % (command, bldt['spv'], proc)
+        cmd = 'supervisorctl %s %s-%s' % (command, bldt['bldt'], proc)
         if doit:
             verbose("=> Running '%s'" % cmd)
             (out, err, code) = runCommand(cmd)
@@ -179,12 +179,13 @@ def run_spv(bldt, command, processes, wait=False):
             elif wait:
                 for i in range(0, 9):
                     try:
-                        response = requests.get('http://localhost:%s/%s/ok' % (bldt['port'], bldt['path']))
+                        response = requests.get('http://localhost:%s/%s/ok' % (bldt['port'], bldt['plone']))
                         if response.status_code == 200:
                             break
                         else:
                             time.sleep(5)
-                    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as err:
+                    except Exception as err:
+                        # Don't care the nature of this error
                         error(err)
         else:
             verbose("=> Will be run '%s'" % cmd)
@@ -400,6 +401,7 @@ def main():
             error("Path '%s' doesn't exist" % path)
             continue
 
+        buildouts[bldt]['bldt'] = bldt
         buildouts[bldt]['path'] = path
         buildouts[bldt]['plone'] = get_plone_site(path)
         buildouts[bldt]['port'] = get_instance_port(path)
@@ -407,11 +409,11 @@ def main():
         verbose("Buildout %s" % path)
         if stop:
             if 'i' in stop:
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt] if p['spv'].startswith('instance')]))
+                run_spv(buildouts[bldt], 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('instance')]))
             if 'a' in stop:
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]]))
+                run_spv(buildouts[bldt], 'stop', reversed([p for p in buildouts[bldt]['spv']]))
             if 'w' in stop:
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt] if p['spv'].startswith('worker')]))
+                run_spv(buildouts[bldt], 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('worker')]))
 
         if ns.make0:
             for param_list in ns.make0:
@@ -424,11 +426,11 @@ def main():
             run_develop(buildouts, bldt, ns.develop)
         if restart:
             if 'i' in restart:
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p['spv'].startswith('instance')], wait=True)
+                run_spv(buildouts[bldt], 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')], wait=True)
             if 'a' in restart:
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt]])
+                run_spv(buildouts[bldt], 'restart', [p for p in buildouts[bldt]['spv']])
             if 'w' in restart:
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt] if p['spv'].startswith('worker')])
+                run_spv(buildouts[bldt], 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('worker')])
 
         if 'zeoserver' not in buildouts[bldt]['spv']:
             error("Zeoserver isn't running")
