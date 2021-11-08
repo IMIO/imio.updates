@@ -27,6 +27,8 @@ Changelog
   [sgeulette]
 - Added Makefile to setup or cleanall
   [sgeulette]
+- Add sleep while restarting instances with supervisor
+  [mdhyne]
 
 0.1 (2018-06-21)
 ----------------
