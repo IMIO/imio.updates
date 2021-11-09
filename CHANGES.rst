@@ -29,6 +29,10 @@ Changelog
   [sgeulette]
 - Add sleep while restarting instances with supervisor
   [mdhyne]
+- Improved waiting process
+  [odelaere]
+- Read and find port using pythonic way
+  [odelaere]
 
 0.1 (2018-06-21)
 ----------------
