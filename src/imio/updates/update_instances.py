@@ -41,6 +41,7 @@ warning_errors = False
 warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
 warning_first_pass = True
 warning_ids = []
+wait = False
 
 
 def get_running_buildouts():
@@ -168,7 +169,7 @@ def get_instance_port(path, instance='instance1'):
     return None
 
 
-def run_spv(bldt, path, plone_path, command, processes, wait=False):
+def run_spv(bldt, path, plone_path, command, processes):
     for proc in processes:
         cmd = 'supervisorctl %s %s-%s' % (command, bldt, proc)
         if doit:
@@ -325,7 +326,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass
+    global doit, pattern, instance, stop, restart, warning_first_pass, wait
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -380,10 +381,14 @@ def main():
                         help='To hack collective.indexing.monkey, to keep direct indexation during operations')
     parser.add_argument('-z', '--patchdebug', action='store_true', dest='patchdebug',
                         help='To hack instance-debug. (Needed for Project)')
+    parser.add_argument('-W', '--wait', action='store_true', dest='wait',
+                        help='Wait for instance to be up and running during a `-s restart`')
 
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
+    wait = ns.wait
+
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
     for sv in ns.superv or []:
@@ -435,7 +440,7 @@ def main():
             run_develop(buildouts, bldt, ns.develop)
         if restart:
             if 'i' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')], wait=True)
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')])
             if 'a' in restart:
                 run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
             if 'w' in restart:

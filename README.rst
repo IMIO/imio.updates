@@ -36,11 +36,11 @@ List of available parameters:
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
 
   * 	stop : stop the instances (not zeo)
-  * 	restart : restart the instances after buildout
+  * 	restart : restart the instances (after buildout if `-b` was provided)
   * 	stopall : stop all buildout processes
-  * 	restartall : restart all processes after buildout
+  * 	restartall : restart all processes (after buildout if `-b` was provided)
   *     stopworker : stop the worker instances
-  *     restartworker : restart the worker instances after buildout
+  *     restartworker : restart the worker instances (after buildout if `-b` was provided)
 
 * -a, --auth : enable/disable authentication plugins
 
@@ -73,6 +73,8 @@ List of available parameters:
 * -y, --patchindexing : To hack collective.indexing.monkey, to keep direct indexation during operations
 
 * -z, --patchdebug : Used to patch instance-debug if front-page is a dexterity type and not publically accessible
+
+* -W, --wait : Wait for instance to be up and running during a `-s restart`
 
 To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
 
