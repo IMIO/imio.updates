@@ -347,11 +347,11 @@ def main():
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
-                             " * restart : restart the instances after buildout."
+                             " * restart : restart the instances and waits for it to be up and running (after buildout if `-b` was provided)."
                              " * stopall : stop all buildout processes."
-                             " * restartall : restart all processes after buildout."
+                             " * restartall : restart all processes (after buildout if `-b` was provided)."
                              " * stopworker : stop the worker instances."
-                             " * restartworker : restart the worker instances after buildout.")
+                             " * restartworker : restart the worker instances (after buildout if `-b` was provided).")
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
     parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='9',
