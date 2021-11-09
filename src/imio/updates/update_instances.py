@@ -141,32 +141,29 @@ def unpatch_indexing(path):
         shutil.copy2(cipbck, cip)
 
 
+def search_in_port_cfg(path, to_find):
+    with open("%s/port.cfg" % path, mode='r') as file:
+        for line in file:
+            if to_find in line:
+                return line.split(' ')[-1].strip()
+    error("Cannot extract %s from '%s/port.cfg'" % (to_find, path))
+    return None
+
+
 def get_plone_site(path):
-    name = None
-    cmd = 'grep plone-path %s/port.cfg|cut -c 14-' % path
-    (out, err, code) = runCommand(cmd)
-    for name in out:
-        name = name.strip('\n')
-        break
-    else:
-        error("Cannot extract plone-path from '%s/port.cfg'" % path)
-    return name
+    return search_in_port_cfg(path, 'plone-path')
 
 
 def get_instance_port(path, instance='instance1'):
     proc_http_name= "%s-http" % instance
-    cmd = 'grep %s %s/port.cfg | cut -d" " -f 3' % (proc_http_name, path)
-    with open("%s/port.cfg" % path, mode='r') as file:
-        for line in file:
-            if proc_http_name in line:
-                port = line.split(' ')[-1].strip()
-                try:
-                    int(port)
-                    return port
-                except ValueError:
-                    continue
-    error("Cannot extract %s from '%s/port.cfg'" % (proc_http_name, path))
-    return None
+    port = search_in_port_cfg(path, proc_http_name)
+    if port:
+        try:
+            int(port)
+            return port
+        except ValueError:
+            error('%s has invalid value : "%s"' % (proc_http_name, port))
+            return None
 
 
 def run_spv(bldt, path, plone_path, command, processes):
