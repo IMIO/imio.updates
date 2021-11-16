@@ -70,7 +70,7 @@ List of available parameters:
 
 * -v, --vars : Define env variables like XX=YY, used as: env XX=YY make (or function). (can use multiple times -v)
 
-* -t, --trace : Add more traces
+* -t, --traces : Add more traces
 
 * -y, --patchindexing : To hack collective.indexing.monkey, to keep direct indexation during operations
 

@@ -43,12 +43,13 @@ warning_first_pass = True
 warning_ids = []
 wait = False
 dev_mode = False
-trace = False
+traces = False
 
 
-def debug(msg):
-    if trace:
+def trace(msg):
+    if traces:
         verbose(msg)
+
 
 def get_running_buildouts():
     """ Get running buildouts and instances"""
@@ -161,13 +162,13 @@ def search_in_port_cfg(path, to_find, is_int=False):
         try:
             int(port)
         except ValueError:
-            error("%s has invalid port value : '%s'" % (proc_http_name, port))
+            error("%s has invalid port value : '%s'" % (to_find, port))
             return None
     return port
 
 
-def get_instance_port(path, instance='instance1'):
-    proc_http_name= "%s-http" % instance
+def get_instance_port(path, inst='instance1'):
+    proc_http_name = "%s-http" % inst
     return search_in_port_cfg(path, proc_http_name, is_int=True)
 
 
@@ -185,7 +186,7 @@ def run_spv(bldt, path, plone_path, command, processes):
             elif wait:
                 threshold = 20
                 interval = 10
-                debug('Waiting %d sec ...' % threshold)
+                trace('Waiting %d sec ...' % threshold)
                 time.sleep(threshold)
                 if not (proc.startswith('instance') or proc.startswith('worker')):
                     continue
@@ -193,15 +194,15 @@ def run_spv(bldt, path, plone_path, command, processes):
                 url = 'http://localhost:%s/%s/ok' % (port, plone_path)
                 for i in range(0, 9):
                     try:
-                        debug('Checking %s' % url)
+                        trace('Checking %s' % url)
                         response = requests.get(url)
                         if response.status_code == 200:
                             break
                         else:
-                            debug("Status HTTP status code for 'ok' was %d. Waiting another %d sec..." % (response.status_code,
-                                                                                                   interval))
+                            trace("Status HTTP status code for 'ok' was %d. Waiting another %d sec..." %
+                                  (response.status_code, interval))
                             time.sleep(interval)
-                    except Exception as err:
+                    except Exception as err:  # noqa
                         # Don't care the nature of this error
                         error(str(err))
         else:
@@ -333,7 +334,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass, wait, trace
+    global doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -355,7 +356,8 @@ def main():
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
-                             " * restart : restart the instances and waits for it to be up and running (after buildout if `-b` was provided)."
+                             " * restart : restart the instances and waits for it to be up and running (after "
+                             "buildout if `-b` was provided)."
                              " * stopall : stop all buildout processes."
                              " * restartall : restart all processes (after buildout if `-b` was provided)."
                              " * stopworker : stop the worker instances."
@@ -384,7 +386,7 @@ def main():
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
-    parser.add_argument('-t', '--trace', action='store_true', dest='trace', help="Add more traces")
+    parser.add_argument('-t', '--traces', action='store_true', dest='traces', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
                         help='To hack collective.indexing.monkey, to keep direct indexation during operations')
     parser.add_argument('-z', '--patchdebug', action='store_true', dest='patchdebug',
@@ -395,7 +397,7 @@ def main():
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
-    wait, trace = ns.wait, ns.trace
+    wait, traces = ns.wait, ns.traces
 
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
@@ -431,11 +433,13 @@ def main():
         verbose("Buildout %s" % path)
         if stop:
             if 'i' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('instance')]))
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                                                                  if p.startswith('instance')]))
             if 'a' in stop:
                 run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
             if 'w' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('worker')]))
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                                                                  if p.startswith('worker')]))
 
         if ns.make0:
             for param_list in ns.make0:
@@ -448,11 +452,13 @@ def main():
             run_develop(buildouts, bldt, ns.develop)
         if restart:
             if 'i' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')])
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
+                                                            if p.startswith('instance')])
             if 'a' in restart:
                 run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
             if 'w' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('worker')])
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
+                                                            if p.startswith('worker')])
 
         if 'zeoserver' not in buildouts[bldt]['spv']:
             error("Zeoserver isn't running")
