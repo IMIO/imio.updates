@@ -42,15 +42,22 @@ warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
 warning_first_pass = True
 warning_ids = []
 wait = False
+dev_mode = False
+trace = False
 
+
+def debug(msg):
+    if trace:
+        verbose(msg)
 
 def get_running_buildouts():
     """ Get running buildouts and instances"""
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
-    # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-    # out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
-    # out = ['dmsmail_solr-instance1\n']
+    if dev_mode:
+        # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
+        out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
+        # out = ['dmsmail_solr-instance1\n']
     buildouts = {}
     # getting buildout and started programs
     for name in out:
@@ -117,6 +124,7 @@ def patch_indexing(path):
     if not doit:
         verbose("=> Will be patched: '{}'".format(cip))
     else:
+        verbose("=> Patching: '{}'".format(cip))
         cipbck = cip + '.bck'
         cmd = "sed -i'' '/^ \\+module.indexObject =/,+3 s/^/#/' {}".format(cip)
         if not os.path.exists(cipbck):
@@ -141,56 +149,58 @@ def unpatch_indexing(path):
         shutil.copy2(cipbck, cip)
 
 
-def search_in_port_cfg(path, to_find):
-    with open("%s/port.cfg" % path, mode='r') as file:
-        for line in file:
-            if to_find in line:
-                return line.split(' ')[-1].strip()
-    error("Cannot extract %s from '%s/port.cfg'" % (to_find, path))
-    return None
-
-
-def get_plone_site(path):
-    return search_in_port_cfg(path, 'plone-path')
+def search_in_port_cfg(path, to_find, is_int=False):
+    for line in read_file("%s/port.cfg" % path):
+        if to_find in line:
+            port = line.split(' ')[-1]
+            break
+    else:
+        error("Cannot extract %s from '%s/port.cfg'" % (to_find, path))
+        return None
+    if is_int:
+        try:
+            int(port)
+        except ValueError:
+            error("%s has invalid port value : '%s'" % (proc_http_name, port))
+            return None
+    return port
 
 
 def get_instance_port(path, instance='instance1'):
     proc_http_name= "%s-http" % instance
-    port = search_in_port_cfg(path, proc_http_name)
-    if port:
-        try:
-            int(port)
-            return port
-        except ValueError:
-            error('%s has invalid value : "%s"' % (proc_http_name, port))
-            return None
+    return search_in_port_cfg(path, proc_http_name, is_int=True)
 
 
 def run_spv(bldt, path, plone_path, command, processes):
     for proc in processes:
-        cmd = 'supervisorctl %s %s-%s' % (command, bldt, proc)
+        if dev_mode:
+            cmd = '{}/bin/{} {}'.format(path, proc, command)
+        else:
+            cmd = 'supervisorctl %s %s-%s' % (command, bldt, proc)
         if doit:
             verbose("=> Running '%s'" % cmd)
             (out, err, code) = runCommand(cmd)
             if code:
                 error("Problem running supervisor command")
-            elif wait and proc != processes[-1]:
+            elif wait:
                 threshold = 20
-                interval = 5
-                verbose('Waiting %d sec ...' % threshold)
-                time.sleep(20)
+                interval = 10
+                debug('Waiting %d sec ...' % threshold)
+                time.sleep(threshold)
+                if not (proc.startswith('instance') or proc.startswith('worker')):
+                    continue
                 port = get_instance_port(path, proc)
                 url = 'http://localhost:%s/%s/ok' % (port, plone_path)
                 for i in range(0, 9):
                     try:
-                        verbose('Checking %s' % url)
+                        debug('Checking %s' % url)
                         response = requests.get(url)
                         if response.status_code == 200:
                             break
                         else:
-                            verbose('Status HTTP status code was %d. Waiting another %d sec...' % (response.status_code,
+                            debug("Status HTTP status code for 'ok' was %d. Waiting another %d sec..." % (response.status_code,
                                                                                                    interval))
-                            time.sleep(5)
+                            time.sleep(interval)
                     except Exception as err:
                         # Don't care the nature of this error
                         error(str(err))
@@ -323,7 +333,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass, wait
+    global doit, pattern, instance, stop, restart, warning_first_pass, wait, trace
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -374,6 +384,7 @@ def main():
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
+    parser.add_argument('-t', '--trace', action='store_true', dest='trace', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
                         help='To hack collective.indexing.monkey, to keep direct indexation during operations')
     parser.add_argument('-z', '--patchdebug', action='store_true', dest='patchdebug',
@@ -384,7 +395,7 @@ def main():
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
-    wait = ns.wait
+    wait, trace = ns.wait, ns.trace
 
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
@@ -413,7 +424,7 @@ def main():
             continue
 
         buildouts[bldt]['path'] = path
-        plone_path = get_plone_site(path)
+        plone_path = search_in_port_cfg(path, 'plone-path')
         buildouts[bldt]['plone'] = plone_path
         buildouts[bldt]['port'] = get_instance_port(path)
 
