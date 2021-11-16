@@ -27,6 +27,10 @@ Changelog
   [sgeulette]
 - Added Makefile to setup or cleanall
   [sgeulette]
+- Added sleep while restarting instances with supervisor
+  [mdhyne, odelaere, sgeulette]
+- Read and find port using pythonic way
+  [odelaere]
 
 0.1 (2018-06-21)
 ----------------

@@ -1,9 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import shutil
+import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import requests as requests
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import read_file
@@ -38,15 +41,24 @@ warning_errors = False
 warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
 warning_first_pass = True
 warning_ids = []
+wait = False
+dev_mode = False
+traces = False
+
+
+def trace(msg):
+    if traces:
+        verbose(msg)
 
 
 def get_running_buildouts():
     """ Get running buildouts and instances"""
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
-    # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-    # out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
-    # out = ['dmsmail_solr-instance1\n']
+    if dev_mode:
+        # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
+        out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
+        # out = ['dmsmail_solr-instance1\n']
     buildouts = {}
     # getting buildout and started programs
     for name in out:
@@ -113,6 +125,7 @@ def patch_indexing(path):
     if not doit:
         verbose("=> Will be patched: '{}'".format(cip))
     else:
+        verbose("=> Patching: '{}'".format(cip))
         cipbck = cip + '.bck'
         cmd = "sed -i'' '/^ \\+module.indexObject =/,+3 s/^/#/' {}".format(cip)
         if not os.path.exists(cipbck):
@@ -137,42 +150,61 @@ def unpatch_indexing(path):
         shutil.copy2(cipbck, cip)
 
 
-def get_plone_site(path):
-    name = None
-    cmd = 'grep plone-path %s/port.cfg|cut -c 14-' % path
-    (out, err, code) = runCommand(cmd)
-    for name in out:
-        name = name.strip('\n')
-        break
+def search_in_port_cfg(path, to_find, is_int=False):
+    for line in read_file("%s/port.cfg" % path):
+        if to_find in line:
+            port = line.split(' ')[-1]
+            break
     else:
-        error("Cannot extract plone-path from '%s/port.cfg'" % path)
-    return name
-
-
-def get_instance_port(path):
-    line = None
-    cmd = 'grep instance1-http %s/port.cfg|cut -d" " -f 3' % path
-    (out, err, code) = runCommand(cmd)
-    for line in out:
-        line = line.strip('\n')
+        error("Cannot extract %s from '%s/port.cfg'" % (to_find, path))
+        return None
+    if is_int:
         try:
-            int(line)
+            int(port)
         except ValueError:
-            continue
-        break
-    else:
-        error("Cannot extract instance1-http from '%s/port.cfg'" % path)
-    return line
+            error("%s has invalid port value : '%s'" % (to_find, port))
+            return None
+    return port
 
 
-def run_spv(bldt, command, processes):
+def get_instance_port(path, inst='instance1'):
+    proc_http_name = "%s-http" % inst
+    return search_in_port_cfg(path, proc_http_name, is_int=True)
+
+
+def run_spv(bldt, path, plone_path, command, processes):
     for proc in processes:
-        cmd = 'supervisorctl %s %s-%s' % (command, bldt, proc)
+        if dev_mode:
+            cmd = '{}/bin/{} {}'.format(path, proc, command)
+        else:
+            cmd = 'supervisorctl %s %s-%s' % (command, bldt, proc)
         if doit:
             verbose("=> Running '%s'" % cmd)
             (out, err, code) = runCommand(cmd)
             if code:
                 error("Problem running supervisor command")
+            elif wait:
+                threshold = 20
+                interval = 10
+                trace('Waiting %d sec ...' % threshold)
+                time.sleep(threshold)
+                if not (proc.startswith('instance') or proc.startswith('worker')):
+                    continue
+                port = get_instance_port(path, proc)
+                url = 'http://localhost:%s/%s/ok' % (port, plone_path)
+                for i in range(0, 9):
+                    try:
+                        trace('Checking %s' % url)
+                        response = requests.get(url)
+                        if response.status_code == 200:
+                            break
+                        else:
+                            trace("Status HTTP status code for 'ok' was %d. Waiting another %d sec..." %
+                                  (response.status_code, interval))
+                            time.sleep(interval)
+                    except Exception as err:  # noqa
+                        # Don't care the nature of this error
+                        error(str(err))
         else:
             verbose("=> Will be run '%s'" % cmd)
 
@@ -302,7 +334,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass
+    global doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -324,11 +356,12 @@ def main():
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
-                             " * restart : restart the instances after buildout."
+                             " * restart : restart the instances and waits for it to be up and running (after "
+                             "buildout if `-b` was provided)."
                              " * stopall : stop all buildout processes."
-                             " * restartall : restart all processes after buildout."
+                             " * restartall : restart all processes (after buildout if `-b` was provided)."
                              " * stopworker : stop the worker instances."
-                             " * restartworker : restart the worker instances after buildout.")
+                             " * restartworker : restart the worker instances (after buildout if `-b` was provided).")
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
     parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='9',
@@ -353,14 +386,19 @@ def main():
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
+    parser.add_argument('-t', '--traces', action='store_true', dest='traces', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
                         help='To hack collective.indexing.monkey, to keep direct indexation during operations')
     parser.add_argument('-z', '--patchdebug', action='store_true', dest='patchdebug',
                         help='To hack instance-debug. (Needed for Project)')
+    parser.add_argument('-W', '--wait', action='store_true', dest='wait',
+                        help='Wait for instance to be up and running during a `-s restart`')
 
     ns = parser.parse_args()
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
+    wait, traces = ns.wait, ns.traces
+
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
     for sv in ns.superv or []:
@@ -388,17 +426,20 @@ def main():
             continue
 
         buildouts[bldt]['path'] = path
-        buildouts[bldt]['plone'] = get_plone_site(path)
+        plone_path = search_in_port_cfg(path, 'plone-path')
+        buildouts[bldt]['plone'] = plone_path
         buildouts[bldt]['port'] = get_instance_port(path)
 
         verbose("Buildout %s" % path)
         if stop:
             if 'i' in stop:
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('instance')]))
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                                                                  if p.startswith('instance')]))
             if 'a' in stop:
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
             if 'w' in stop:
-                run_spv(bldt, 'stop', reversed([p for p in buildouts[bldt]['spv'] if p.startswith('worker')]))
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                                                                  if p.startswith('worker')]))
 
         if ns.make0:
             for param_list in ns.make0:
@@ -411,11 +452,13 @@ def main():
             run_develop(buildouts, bldt, ns.develop)
         if restart:
             if 'i' in restart:
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('instance')])
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
+                                                            if p.startswith('instance')])
             if 'a' in restart:
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv']])
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
             if 'w' in restart:
-                run_spv(bldt, 'restart', [p for p in buildouts[bldt]['spv'] if p.startswith('worker')])
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
+                                                            if p.startswith('worker')])
 
         if 'zeoserver' not in buildouts[bldt]['spv']:
             error("Zeoserver isn't running")
