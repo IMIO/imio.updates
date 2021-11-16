@@ -190,7 +190,7 @@ def run_spv(bldt, path, plone_path, command, processes):
                 time.sleep(threshold)
                 if not (proc.startswith('instance') or proc.startswith('worker')):
                     continue
-                port = get_instance_port(path, proc)
+                port = get_instance_port(path, proc.replace('worker', 'instance'))
                 url = 'http://localhost:%s/%s/ok' % (port, plone_path)
                 for i in range(0, 9):
                     try:
