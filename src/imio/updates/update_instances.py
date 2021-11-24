@@ -127,7 +127,7 @@ def patch_indexing(path):
     else:
         verbose("=> Patching: '{}'".format(cip))
         cipbck = cip + '.bck'
-        cmd = "sed -i'' '/^ \\+module.indexObject =/,+3 s/^/#/' {}".format(cip)
+        cmd = "sed -i'' '/^ \\+module.indexObject = indexObject/,+3 s/^/#/' {}".format(cip)
         if not os.path.exists(cipbck):
             cmd = cmd.replace("sed -i'' ", "sed -i'.bck' ")
         (out, err, code) = runCommand(cmd)
