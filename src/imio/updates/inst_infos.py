@@ -128,6 +128,9 @@ infos['users'] = count
 # get groups count
 infos['groups'] = len(api.group.get_groups())
 
+# get mail host
+infos['mailhost'] = portal.MailHost.smtp_host
+
 # sizes. app is zope
 # filestorage
 dbs = app['Control_Panel']['Database']  # noqa F821
