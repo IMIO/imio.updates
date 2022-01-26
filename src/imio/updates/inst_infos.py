@@ -100,6 +100,8 @@ if tool == 'dms':
     types = api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.omail_types') or []
     # TODO in dms 3.0 mt_title => dtitle
     infos['checks']['omt'] = u', '.join([tdic.get('mt_title', tdic.get('dtitle', u'')) for tdic in types])
+    # solr
+    infos['checks']['solr'] = int(api.portal.get_registry_record('collective.solr.active', default=0))
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
