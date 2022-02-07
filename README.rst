@@ -68,7 +68,8 @@ List of available parameters:
   * First parameter is the relative path from your buildout to the script file.
   * Other parameters are arguments to be given to the script when called.
 
-* -v, --vars : Define env variables like XX=YY, used as: env XX=YY make (or function). (can use multiple times -v)
+* -v, --vars : Define env variables like XX=YY, used as: env XX=YY make (or function).
+  (can use multiple times -v). FUNC_PARTS is a special var (see docs).
 
 * -t, --traces : Add more traces
 
@@ -94,6 +95,8 @@ Tips & examples
 * -f step ``imio.dms.mail:default`` ``actions`` : run import step for profile profile-imio.dms.mail:default actions
 * -w '``id="maintenance-soon" text="A maintenance operation will be done at 4pm." activate=True``'
 * -c ``scripts/my_custom.py param1 param2`` : calls the scripts at buildout/scripts/my_custom.py with param1 and param2 as arguments
+* -v FUNC_PARTS=abcde : calls -f multiple time for each letter passed as ENV FUNC_PART=a.
+  Can be used to split migration in multiple runs.
 
 Multiple options:
 

@@ -31,6 +31,8 @@ Changelog
   [mdhyne, odelaere, sgeulette]
 - Read and find port using pythonic way
   [odelaere]
+- Can call multiple times a function with FUNC_PARTS variable
+  [sgeulette]
 
 0.1 (2018-06-21)
 ----------------

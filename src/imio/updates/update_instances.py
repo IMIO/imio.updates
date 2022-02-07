@@ -57,7 +57,7 @@ def get_running_buildouts():
     (out, err, code) = runCommand(cmd)
     if dev_mode:
         # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-        out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
+        out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance-debug\n']
         # out = ['dmsmail_solr-instance1\n']
     buildouts = {}
     # getting buildout and started programs
@@ -384,7 +384,8 @@ def main():
                              ' * ...'
                         ),
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
-                        help="Define env variables like XX=YY, used as: env XX=YY make (or function).")
+                        help="Define env variables like XX=YY, used as: env XX=YY make (or function). (can use "
+                             "multiple times -v). FUNC_PARTS is a special var (see docs).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
     parser.add_argument('-t', '--traces', action='store_true', dest='traces', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
@@ -415,7 +416,14 @@ def main():
         elif sv == 'restartworker':
             restart += 'w'
 
-    env = ' '.join(ns.vars)
+    func_parts = []
+    envs = []
+    for var in ns.vars:
+        if var.startswith('FUNC_PARTS='):
+            func_parts = [l for l in var.split('=')[1]]
+        else:
+            envs.append(var)
+    env = ' '.join(envs)
 
     start = datetime.now()
     buildouts = get_running_buildouts()
@@ -488,7 +496,15 @@ def main():
 
         if functions:
             for param_list in functions:
-                run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
+                if func_parts:
+                    for part in func_parts:
+                        new_env = 'FUNC_PART={} '.format(part) + env
+                        ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
+                        if ret != 0:
+                            error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
+                            break
+                else:
+                    run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
             if warning_first_pass:
