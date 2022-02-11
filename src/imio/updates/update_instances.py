@@ -315,22 +315,22 @@ def compile_warning(i, params):
 
 
 def email(buildouts, recipient):
-    hostname = socket.gethostname()
-    lanhost = hostname.replace('.imio.be', '.lan.imio.be')
+    hostname = socket.gethostname()  # ged-prod4.imio.be, ged-prod5, ged18
+    lanhost = hostname.replace('.imio.be', '').replace('-prod', '')
     output = []
     for bldt in sorted(buildouts.keys()):
         if 'port' not in buildouts[bldt]:
             continue
         output.append("Buildout '{0}': http://{1}:{2}/manage_main".format(bldt, lanhost, buildouts[bldt]['port']))
     msg = MIMEMultipart()
-    sender = 'zope@{}'.format(hostname)
+    sender = 'imio.updates@imio.be'
     msg['From'] = sender
     msg['To'] = recipient
     msg['Subject'] = 'imio.updates finished on {}'.format(hostname)
     msg.attach(MIMEText('\n'.join(output)))
-    s = smtplib.SMTP('localhost')
+    s = smtplib.SMTP('mailrelay.imio.be', 25)
     s.sendmail(sender, [recipient], msg.as_string())
-    s.close()
+    s.quit()
 
 
 def main():
