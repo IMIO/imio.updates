@@ -57,7 +57,7 @@ def get_running_buildouts():
     (out, err, code) = runCommand(cmd)
     if dev_mode:
         # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-        out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance-debug\n']
+        out = ['TAGS/dmsmail3.0-zeoserver\n', 'TAGS/dmsmail3.0-instance1\n']
         # out = ['dmsmail_solr-instance1\n']
     buildouts = {}
     # getting buildout and started programs
@@ -73,6 +73,16 @@ def get_running_buildouts():
                 break
         else:
             error("Cannot extract buildout name from '%s'" % name)
+    # get stopped zeo
+    cmd = 'supervisorctl status | grep "\\-zeoserver" | grep STOPPED | cut -f 1 -d " " | sort -r'
+    (out, err, code) = runCommand(cmd)
+    if dev_mode:
+        out = ['TAGS/dmsmail2.3-zeoserver\n']
+    for name in out:
+        name = name.strip('\n')
+        bldt = name[:-10]
+        if bldt not in buildouts:
+            buildouts[bldt] = {'spv': []}
     # escape if pattern not matched
     # order started following defined list
     escaped = []
@@ -354,7 +364,7 @@ def main():
                         )
     parser.add_argument('-s', '--superv', dest='superv', action='append',
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker', 'stopzeo',
-                                 'restartzeo'],
+                                 'startzeo', 'restartzeo'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
                              " * restart : restart the instances and waits for it to be up and running (after "
@@ -364,6 +374,7 @@ def main():
                              " * stopworker : stop the worker instances."
                              " * restartworker : restart the worker instances (after buildout if `-b` was provided)."
                              " * stopzeo : stop the zeo."
+                             " * startzeo : start all supervised zeo. (after buildout if `-b` was provided)"
                              " * restartzeo : restart the zeo instance (after buildout if `-b` was provided).")
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
@@ -422,6 +433,8 @@ def main():
             restart += 'w'
         elif sv == 'restartzeo':
             restart += 'z'
+        elif sv == 'startzeo':
+            restart += 'y'
 
     func_parts = []
     envs = []
@@ -456,8 +469,7 @@ def main():
                 run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
                                                                   if p.startswith('worker')]))
             if 'z' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
-                                                                  if p.startswith('zeoserver')]))
+                run_spv(bldt, path, plone_path, 'stop', reversed(['zeoserver']))
 
         if ns.make0:
             for param_list in ns.make0:
@@ -469,9 +481,12 @@ def main():
         elif ns.develop:
             run_develop(buildouts, bldt, ns.develop)
         if restart:
-            if 'z' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
-                                                            if p.startswith('zeoserver')])
+            if 'z' in restart or 'y' in restart:
+                if 'zeoserver' in buildouts[bldt]['spv']:
+                    run_spv(bldt, path, plone_path, 'restart', ['zeoserver'])
+                else:
+                    run_spv(bldt, path, plone_path, 'start', ['zeoserver'])
+                    buildouts[bldt]['spv'].append('zeoserver')
             if 'a' in restart:
                 run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
             if 'i' in restart:

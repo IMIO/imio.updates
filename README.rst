@@ -42,6 +42,7 @@ List of available parameters:
   *     stopworker : stop the worker instances
   *     restartworker : restart the worker instances (after buildout if `-b` was provided)
   *     stopzeo : stop the zeo
+  *     startzeo : start all supervised zeo. (after buildout if `-b` was provided)
   *     restartzeo : restart the zeo instance (after buildout if `-b` was provided)
 
 * -a, --auth : enable/disable authentication plugins
