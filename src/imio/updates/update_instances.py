@@ -353,7 +353,7 @@ def main():
                              " * upgrade `_all_`"
                         )
     parser.add_argument('-s', '--superv', dest='superv', action='append',
-                        choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker', 'stopzeo'
+                        choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker', 'stopzeo',
                                  'restartzeo'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
