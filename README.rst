@@ -41,6 +41,8 @@ List of available parameters:
   * 	restartall : restart all processes (after buildout if `-b` was provided)
   *     stopworker : stop the worker instances
   *     restartworker : restart the worker instances (after buildout if `-b` was provided)
+  *     stopzeo : stop the zeo
+  *     restartzeo : restart the zeo instance (after buildout if `-b` was provided)
 
 * -a, --auth : enable/disable authentication plugins
 

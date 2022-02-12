@@ -353,7 +353,8 @@ def main():
                              " * upgrade `_all_`"
                         )
     parser.add_argument('-s', '--superv', dest='superv', action='append',
-                        choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker'],
+                        choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker', 'stopzeo'
+                                 'restartzeo'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
                              " * restart : restart the instances and waits for it to be up and running (after "
@@ -361,7 +362,9 @@ def main():
                              " * stopall : stop all buildout processes."
                              " * restartall : restart all processes (after buildout if `-b` was provided)."
                              " * stopworker : stop the worker instances."
-                             " * restartworker : restart the worker instances (after buildout if `-b` was provided).")
+                             " * restartworker : restart the worker instances (after buildout if `-b` was provided)."
+                             " * stopzeo : stop the zeo."
+                             " * restartzeo : restart the zeo instance (after buildout if `-b` was provided).")
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
     parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='9',
@@ -409,12 +412,16 @@ def main():
             stop += 'a'
         elif sv == 'stopworker':
             stop += 'w'
+        elif sv == 'stopzeo':
+            stop += 'z'
         elif sv == 'restart':
             restart += 'i'
         elif sv == 'restartall':
             restart += 'a'
         elif sv == 'restartworker':
             restart += 'w'
+        elif sv == 'restartzeo':
+            restart += 'z'
 
     func_parts = []
     envs = []
@@ -448,6 +455,9 @@ def main():
             if 'w' in stop:
                 run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
                                                                   if p.startswith('worker')]))
+            if 'z' in stop:
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                                                                  if p.startswith('zeoserver')]))
 
         if ns.make0:
             for param_list in ns.make0:
@@ -459,11 +469,14 @@ def main():
         elif ns.develop:
             run_develop(buildouts, bldt, ns.develop)
         if restart:
+            if 'z' in restart:
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
+                                                            if p.startswith('zeoserver')])
+            if 'a' in restart:
+                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
             if 'i' in restart:
                 run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
                                                             if p.startswith('instance')])
-            if 'a' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
             if 'w' in restart:
                 run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
                                                             if p.startswith('worker')])

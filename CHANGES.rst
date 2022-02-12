@@ -1,7 +1,13 @@
 Changelog
 =========
 
-0.2 (unreleased)
+0.3 (unreleased)
+----------------
+
+- Added stopzeo and restartzeo parameters
+  [sgeulette]
+
+0.2 (2022-02-12)
 ----------------
 
 - Managed stop and start separately

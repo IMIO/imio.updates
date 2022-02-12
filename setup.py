@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.2.dev0'
+version = '0.3.dev0'
 
 long_description = (
     open('README.rst').read()
@@ -23,8 +23,8 @@ setup(name='imio.updates',
           "Programming Language :: Python",
       ],
       keywords='',
-      author='',
-      author_email='',
+      author='Stéphan Geulette',
+      author_email='stephan.geulette@imio.be',
       url='https://github.com/imio/imio.updates',
       license='gpl',
       packages=find_packages('src'),
