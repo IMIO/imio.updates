@@ -19,7 +19,7 @@ import sys
 types_to_count = {
     'dms':
     {'portal_type':
-        ('dmsincomingmail', 'dmsoutgoingmail', 'task', 'organization',
+        ('dmsincomingmail', 'dmsincoming_email', 'dmsoutgoingmail', 'task', 'organization',
          'person', 'held_position', 'dmsommainfile'), },
     'pst':
     {'portal_type':
