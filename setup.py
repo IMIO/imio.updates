@@ -10,7 +10,7 @@ long_description = (
     + '\n' +
     open('CONTRIBUTORS.txt').read()
     + '\n' +
-    open('CHANGES.txt').read()
+    open('CHANGES.rst').read()
     + '\n')
 
 setup(name='imio.updates',
