@@ -77,7 +77,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep "\\-zeoserver" | grep STOPPED | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     if dev_mode:
-        out = ['TAGS/dmsmail2.3-zeoserver\n']
+        out = ['TAGS/dmsmail3.0-zeoserver\n']
     for name in out:
         name = name.strip('\n')
         bldt = name[:-10]
@@ -180,6 +180,15 @@ def search_in_port_cfg(path, to_find, is_int=False):
 def get_instance_port(path, inst='instance1'):
     proc_http_name = "%s-http" % inst
     return search_in_port_cfg(path, proc_http_name, is_int=True)
+
+
+def get_git_state(path):
+    cmd = 'git --git-dir={}/.git describe'.format(path)
+    (out, err, code) = runCommand(cmd)
+    if code or err:
+        error("Problem in command '{}': {}".format(cmd, err))
+        return ''
+    return out[0].strip('\n')
 
 
 def run_spv(bldt, path, plone_path, command, processes):
@@ -440,7 +449,7 @@ def main():
     envs = []
     for var in ns.vars:
         if var.startswith('FUNC_PARTS='):
-            func_parts = [l for l in var.split('=')[1]]
+            func_parts = [ltr for ltr in var.split('=')[1]]
         else:
             envs.append(var)
     env = ' '.join(envs)
@@ -458,7 +467,7 @@ def main():
         buildouts[bldt]['plone'] = plone_path
         buildouts[bldt]['port'] = get_instance_port(path)
 
-        verbose("Buildout %s" % path)
+        verbose("Buildout %s    (%s)" % (path, get_git_state(path)))
         if stop:
             if 'i' in stop:
                 run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
