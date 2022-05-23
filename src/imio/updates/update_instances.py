@@ -183,11 +183,11 @@ def get_instance_port(path, inst='instance1'):
 
 
 def get_git_state(path):
-    cmd = 'git --git-dir={}/.git describe'.format(path)
+    cmd = 'git --git-dir={}/.git describe --tags'.format(path)
     (out, err, code) = runCommand(cmd)
     if code or err:
         error("Problem in command '{}': {}".format(cmd, err))
-        return ''
+        return 'NO TAG'
     return out[0].strip('\n')
 
 
