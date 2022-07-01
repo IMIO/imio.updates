@@ -6,6 +6,8 @@ Changelog
 
 - Added stopzeo and restartzeo parameters
   [sgeulette]
+- Added a QUERY_YEAR env var to inst_info to be able to count content created for a specific year.
+  [aduchene]
 
 0.2 (2022-02-12)
 ----------------

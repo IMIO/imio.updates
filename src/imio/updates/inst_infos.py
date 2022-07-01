@@ -9,6 +9,7 @@ from imio.pyutils.system import load_var
 # from imio.pyutils.system import read_dir
 # from imio.pyutils.system import read_file
 from plone import api
+from DateTime import DateTime
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
 
@@ -55,11 +56,31 @@ if tool not in types_to_count.keys():
 
 # get types count
 catalog = portal.portal_catalog
-for index_name, type_names in types_to_count.get(tool, []).items():
-    lengths = dict(catalog.Indexes[index_name].uniqueValues(withLengths=True))
 
-    for type_name in type_names:
-        infos['types'][type_name] = lengths.get(type_name, 0)
+query_year = os.getenv('QUERY_YEAR', False)
+
+if query_year:
+    # If we have a QUERY_YEAR env variable, we only count content created that year.
+    year_range = {
+        'query': (
+            DateTime('{}-01-01 00:00:00'.format(query_year)),
+            DateTime('{}-12-31 23:59:59'.format(query_year)),
+        ),
+        'range': 'min:max',
+    }
+    for index_name, type_names in types_to_count.get(tool, []).items():
+        for type_name in type_names:
+            infos['types'][type_name] = len(catalog.searchResults(**{
+                index_name: type_name,
+                'created': year_range
+            }))
+
+else:
+    for index_name, type_names in types_to_count.get(tool, []).items():
+        lengths = dict(catalog.Indexes[index_name].uniqueValues(withLengths=True))
+
+        for type_name in type_names:
+            infos['types'][type_name] = lengths.get(type_name, 0)
 
 
 def check_wsclient():
