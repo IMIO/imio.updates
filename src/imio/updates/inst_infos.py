@@ -2,6 +2,8 @@
 # Run by imio.updates : bin/update_instances -c ~/imio.updates/src/imio/updates/inst_infos.py dms
 # or with bin/instance1 -Ostavelot run imio.updates/src/imio/updates/inst_infos.py dms
 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from imio.helpers.content import safe_encode
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
@@ -9,7 +11,6 @@ from imio.pyutils.system import load_var
 # from imio.pyutils.system import read_dir
 # from imio.pyutils.system import read_file
 from plone import api
-from DateTime import DateTime
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
 
@@ -56,31 +57,29 @@ if tool not in types_to_count.keys():
 
 # get types count
 catalog = portal.portal_catalog
+now = datetime.now()
+this_year = now.year
+l_y_frame = now - relativedelta(years=1)  # last year frame
 
-query_year = os.getenv('QUERY_YEAR', False)
-
-if query_year:
-    # If we have a QUERY_YEAR env variable, we only count content created that year.
-    year_range = {
-        'query': (
-            DateTime('{}-01-01 00:00:00'.format(query_year)),
-            DateTime('{}-12-31 23:59:59'.format(query_year)),
-        ),
-        'range': 'min:max',
-    }
-    for index_name, type_names in types_to_count.get(tool, []).items():
-        for type_name in type_names:
-            infos['types'][type_name] = len(catalog.searchResults(**{
-                index_name: type_name,
-                'created': year_range
-            }))
-
-else:
-    for index_name, type_names in types_to_count.get(tool, []).items():
-        lengths = dict(catalog.Indexes[index_name].uniqueValues(withLengths=True))
-
-        for type_name in type_names:
-            infos['types'][type_name] = lengths.get(type_name, 0)
+for index_name, type_names in types_to_count.get(tool, []).items():
+    lengths = dict(catalog.Indexes[index_name].uniqueValues(withLengths=True))
+    for type_name in type_names:
+        tdic = {'tot': lengths.get(type_name, 0), 'years': {}, 'first': ''}
+        first_year = this_year
+        brains = catalog.unrestrictedSearchResults(portal_type=[type_name], sort_on='created', sort_limit=1)
+        if brains:
+            dte = brains[0].creation_date
+            tdic['first'] = dte.strftime('%Y%m%d-%H:%M:%S')
+            first_year = dte.year()  # DateTime
+        # all years
+        for year in range(first_year, this_year+1):
+            year_range = {'query': (datetime(year, 1, 1), datetime(year+1, 1, 1)), 'range': 'min:max'}
+            tdic['years'][str(year)] = len(catalog.unrestrictedSearchResults(
+                                           **{index_name: type_name, 'created': year_range}))
+        # last year frame
+        year_range = {'query': (now, l_y_frame), 'range': 'min:max'}
+        tdic['frame'] = len(catalog.unrestrictedSearchResults(**{index_name: type_name, 'created': year_range}))
+        infos['types'][type_name] = tdic
 
 
 def check_wsclient():
