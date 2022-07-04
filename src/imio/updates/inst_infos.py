@@ -32,6 +32,9 @@ types_to_count = {
         ('Meeting', 'MeetingItem', 'MeetingConfig'),
      'portal_type':
         ('annex', 'annexDecision', 'meetingadvice', 'meetingadvicefinances'), },
+    'urban':
+    {'portal_type':
+         ('File',), },
 }
 
 zopedir = os.path.expanduser("~")
