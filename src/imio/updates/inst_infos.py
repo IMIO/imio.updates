@@ -66,7 +66,7 @@ for index_name, type_names in types_to_count.get(tool, []).items():
     for type_name in type_names:
         tdic = {'tot': lengths.get(type_name, 0), 'years': {}, 'first': ''}
         first_year = this_year
-        brains = catalog.unrestrictedSearchResults(portal_type=[type_name], sort_on='created', sort_limit=1)
+        brains = catalog.unrestrictedSearchResults(**{index_name: [type_name], 'sort_on': 'created', 'sort_limit': 1})
         if brains:
             dte = brains[0].creation_date
             tdic['first'] = dte.strftime('%Y%m%d-%H:%M:%S')
