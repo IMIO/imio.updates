@@ -4,6 +4,7 @@ import logging
 import transaction
 
 from plone import api
+from Products.PluggableAuthService.interfaces.plugins import IAuthenticationPlugin
 
 LOGGER_LEVEL = 20
 
@@ -27,15 +28,20 @@ def setup_logger(level=20):
             break
 
 def auth(status):
-    from Products.ExternalMethod.ExternalMethod import manage_addExternalMethod
-    # we add the external method cputils_install
-    if not hasattr(app, 'cputils_install'):
-        manage_addExternalMethod(app, 'cputils_install', '', 'CPUtils.utils', 'install')
-    # we run this method
-    app.cputils_install(app)
-    # change authentication
-    app.cputils_change_authentication_plugins(activate=status, dochange='1')
-    verbose("Authentication plugins %s" % (status == '0' and 'disabled' or 'enabled'))
+    plugins = obj.acl_users.plugins
+    auth_plugins = plugins.getAllPlugins(plugin_type="IAuthenticationPlugin")
+    import ipdb
+    ipdb.set_trace()
+    if status == 1:
+        for plugin in auth_plugins['available']:
+            verbose("Activate plugins %s for %s" % (plugin, obj))
+            plugins.activatePlugin(IAuthenticationPlugin, plugin)
+    elif status == 0:
+        for plugin in auth_plugins['active']:
+            verbose("Deactivate plugins %s for %s" % (plugin, obj))
+            plugins.deactivatePlugin(IAuthenticationPlugin, plugin)
+
+    verbose("Authentication plugins %s" % (status == 0 and 'disabled' or 'enabled'))
     transaction.commit()
 
 
