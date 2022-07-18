@@ -1,6 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import argparse
+import os
+import re
 import shutil
+import smtplib
+import socket
 import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
@@ -13,13 +18,6 @@ from imio.pyutils.system import read_file
 from imio.pyutils.system import runCommand
 from imio.pyutils.system import verbose
 
-import argparse
-import os
-import re
-import smtplib
-import socket
-
-
 # import sys
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
@@ -28,7 +26,12 @@ import socket
 
 doit = False
 pattern = ''
-function_script = os.path.join(os.path.dirname(__file__), 'run_script.py')
+function_scripts = {
+    'step': os.path.join(os.path.dirname(__file__), "scripts", "step.py"),
+    'upgrade': os.path.join(os.path.dirname(__file__), "scripts", "upgrade.py"),
+    'auth': os.path.join(os.path.dirname(__file__), "scripts", "auth.py"),
+    'message': os.path.join(os.path.dirname(__file__), "scripts", "message.py"),
+}
 basedir = '/srv/instances'
 starting = ['zeoserver', 'instance1', 'instance2', 'instance3', 'instance4', 'libreoffice',
             'worker-amqp', 'worker-async']
@@ -36,11 +39,6 @@ buildout = False
 instance = 'instance-debug'
 stop = ''
 restart = ''
-warning_dic = {}
-warning_errors = False
-warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
-warning_first_pass = True
-warning_ids = []
 wait = False
 dev_mode = False
 traces = False
@@ -264,18 +262,19 @@ def run_make(buildouts, bldt, env, make):
     return code
 
 
-def run_function(buildouts, bldt, env, fct, params, script=function_script):
+def run_function(buildouts, bldt, env, script, params):
     path = buildouts[bldt]['path']
     os.chdir(path)
     cmd = (env and 'env {} '.format(env) or '')
-    cmd += '%s/bin/%s -O%s run %s %s %s' % (path, instance, buildouts[bldt]['plone'], script, fct, params)
+    actual_script = script in function_scripts and function_scripts[script] or script
+    cmd += '%s/bin/%s -O %s run %s %s' % (path, instance, buildouts[bldt]['plone'], actual_script, params)
     code = 0
     if doit:
         start = datetime.now()
         verbose("=> Running '%s'" % cmd)
         (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
         if code:
-            error("Problem running '%s' function: see %s/make.log file" % (fct, path))
+            error("Problem running '%s' function: see %s/make.log file" % (script, path))
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
         verbose("=> Will be run '%s'" % cmd)
@@ -298,7 +297,6 @@ def run_develop(buildouts, bldt, products):
 
 
 def compile_warning(i, params):
-    global warning_errors
     p_dic = {}
     import re
     regex = re.compile(r'[^"\s]+(?:"[^"\\]*(?:\\.[^"\\]*)*")*', re.VERBOSE)
@@ -312,25 +310,29 @@ def compile_warning(i, params):
                 p_dic.update(eval('dict(%s)' % part))
             except Exception as msg:
                 error("Problem in -w with param '%s': %s" % (part, msg))
-                warning_errors = True
+                return ''
     verbose("Message parameters: %s" % p_dic)
     mandatory_params = ['id', 'activate']
     for param in mandatory_params:
         if param not in p_dic:
             error("Parameter '%s' is required !" % param)
-            warning_errors = True
-    for dt in ('start', 'end'):
-        if dt in p_dic:
-            try:
-                p_dic[dt] = datetime.strptime(p_dic[dt], '%Y%m%d-%H%M')
-            except ValueError as msg:
-                error("Cannot compile datetime '%s' : %s" % (p_dic[dt], msg))
-                warning_errors = True
+            return ''
 
-    id = p_dic.pop('id', 'no_id')
-    warning_dic[id] = p_dic
-    dump_var(warning_file, warning_dic)
-    warning_ids.insert(i, id)
+    res = '{} --activate {}'.format(p_dic.pop('id'), p_dic.pop('activate') and 1 or 0)
+    if 'text' in p_dic:
+        res += ' --message "{}"'.format(p_dic['text'])
+    if 'msg_type' in p_dic:
+        res += ' --type {}'.format(p_dic['msg_type'])
+    if 'can_hide' in p_dic:
+        res += ' --hide {}'.format(p_dic['can_hide'] and 1 or 0)
+    if 'title' in p_dic:
+        res += ' --title "{}"'.format(p_dic['title'])
+    if 'start' in p_dic:
+        res += ' --start {}'.format(p_dic['start'])
+    if 'end' in p_dic:
+        res += ' --end {}'.format(p_dic['end'])
+
+    return res
 
 
 def email(buildouts, recipient):
@@ -353,7 +355,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
+    global doit, pattern, instance, stop, restart, wait, traces
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -528,8 +530,7 @@ def main():
         if ns.custom:
             for param_list in ns.custom:
                 # function is optional or can be a param so we need to handle it
-                run_function(buildouts, bldt, env, script=param_list[0], fct=''.join(param_list[1:2]),
-                             params=' '.join(param_list[2:]))
+                run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
         if functions:
             for param_list in functions:
@@ -544,13 +545,12 @@ def main():
                     run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
-            if warning_first_pass:
-                for i, param_list in enumerate(warnings):
-                    compile_warning(i, param_list)
-                warning_first_pass = False
-            if not warning_errors:
-                for id in warning_ids:
-                    run_function(buildouts, bldt, env, 'message', '%s %s' % (id, warning_file))
+            for i, param_list in enumerate(warnings):
+                params = compile_warning(i, param_list)
+                if params:
+                    run_function(buildouts, bldt, env, 'message', params)
+                else :
+                    error("probleme with parameter : " + param_list)
 
         if ns.patchindexing:
             unpatch_indexing(buildouts[bldt]['path'])
