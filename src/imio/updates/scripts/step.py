@@ -1,31 +1,13 @@
 from __future__ import print_function
+
+from plone import api
+
 import argparse
 import logging
 import transaction
 
-from plone import api
 
 LOGGER_LEVEL = 20
-
-
-def verbose(*messages):
-    print(">>", " ".join(messages))
-
-
-def setup_logger(level=20):
-    """
-        When running "bin/instance run ...", the logger level is 30 (warn).
-        It is possible to set it to 20 (info) or 10 (debug).
-    """
-    if level == 30:
-        return
-
-    logger = logging.getLogger()
-    logger.setLevel(level)
-    for handler in logging.root.handlers:
-        if handler.level == 30 and handler.formatter is not None:
-            handler.level = level
-            break
 
 
 def run_step(profile, step):
@@ -52,6 +34,11 @@ parser.add_argument('profile', type=str, help="Profile to upgrade.")
 parser.add_argument('step', type=str, help='Target step')
 parser.add_argument('-c', dest="my_path")
 args = parser.parse_args()
+
+sys.path[0:0] = [ os.path.dirname(args.my_path)]
+from script_utils import setup_logger
+from script_utils import verbose
+
 
 setup_logger(LOGGER_LEVEL)
 

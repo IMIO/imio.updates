@@ -1,37 +1,19 @@
 from __future__ import print_function
 
+from datetime import datetime
+from plone import api
+
 import argparse
 import logging
-from datetime import datetime
-
 import transaction
-from plone import api
+
 
 LOGGER_LEVEL = 20
 
 
-def verbose(*messages):
-    print(">>", " ".join(messages))
-
-
-def setup_logger(level=20):
-    """
-        When running "bin/instance run ...", the logger level is 30 (warn).
-        It is possible to set it to 20 (info) or 10 (debug).
-    """
-    if level == 30:
-        return
-
-    logger = logging.getLogger()
-    logger.setLevel(level)
-    for handler in logging.root.handlers:
-        if handler.level == 30 and handler.formatter is not None:
-            handler.level = level
-            break
-
-
 def message(id, can_hide, message, title, msg_type, start, end, activate):
-    from collective.messagesviewlet.utils import add_message, _richtextval
+    from collective.messagesviewlet.utils import _richtextval
+    from collective.messagesviewlet.utils import add_message
     modified = False
     config = obj['messages-config']
     # update existing message
@@ -96,6 +78,11 @@ parser.add_argument('-e',
 parser.add_argument('-c', dest="my_path")
 
 args = parser.parse_args()
+
+sys.path[0:0] = [ os.path.dirname(args.my_path)]
+from script_utils import setup_logger
+from script_utils import verbose
+
 
 setup_logger(LOGGER_LEVEL)
 
