@@ -1,12 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import shutil
-import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-import requests as requests
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import read_file
@@ -16,8 +12,12 @@ from imio.pyutils.system import verbose
 import argparse
 import os
 import re
+import requests as requests
+import shutil
 import smtplib
 import socket
+import sys
+import time
 
 
 # import sys
@@ -39,7 +39,6 @@ restart = ''
 warning_dic = {}
 warning_errors = False
 warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
-warning_first_pass = True
 warning_ids = []
 wait = False
 dev_mode = False
@@ -297,7 +296,7 @@ def run_develop(buildouts, bldt, products):
     return code
 
 
-def compile_warning(i, params):
+def compile_warning(i, params, dump_warnings):
     global warning_errors
     p_dic = {}
     import re
@@ -328,9 +327,10 @@ def compile_warning(i, params):
                 warning_errors = True
 
     id = p_dic.pop('id', 'no_id')
-    warning_dic[id] = p_dic
-    dump_var(warning_file, warning_dic)
     warning_ids.insert(i, id)
+    if dump_warnings:
+        warning_dic[id] = p_dic
+        dump_var(warning_file, warning_dic)
 
 
 def email(buildouts, recipient):
@@ -353,7 +353,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
+    global doit, pattern, instance, stop, restart, wait, traces
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -406,6 +406,8 @@ def main():
                              ' * activate=True'
                              ' * ...'
                         ),
+    parser.add_argument('-wnd', '--', action='store_false', dest='dump_warnings', default="True",
+                        help='To not dump warnings. Use dump file already there!')
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function). (can use "
                              "multiple times -v). FUNC_PARTS is a special var (see docs).")
@@ -544,10 +546,8 @@ def main():
                     run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
-            if warning_first_pass:
-                for i, param_list in enumerate(warnings):
-                    compile_warning(i, param_list)
-                warning_first_pass = False
+            for i, param_list in enumerate(warnings):
+                compile_warning(i, param_list, ns.dump_warnings)
             if not warning_errors:
                 for id in warning_ids:
                     run_function(buildouts, bldt, env, 'message', '%s %s' % (id, warning_file))
