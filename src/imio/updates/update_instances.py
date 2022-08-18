@@ -406,7 +406,7 @@ def main():
                              ' * activate=True'
                              ' * ...'
                         ),
-    parser.add_argument('-wnd', '--', action='store_false', dest='dump_warnings', default="True",
+    parser.add_argument('-wnd', '--warning-no-dump', action='store_false', dest='dump_warnings', default="True",
                         help='To not dump warnings. Use dump file already there!')
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function). (can use "
