@@ -66,6 +66,8 @@ List of available parameters:
   * start, end="YYYYMMDD-hhmm"
   * ...
 
+* -wnd, --warning-no-dump : do not write disk message file. The existing one is used.
+
 * -c, --custom : run a custom script with arguments.
 
   * First parameter is the relative path from your buildout to the script file.
