@@ -39,6 +39,7 @@ restart = ''
 warning_dic = {}
 warning_errors = False
 warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
+warning_first_pass = True
 warning_ids = []
 wait = False
 dev_mode = False
@@ -354,7 +355,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, wait, traces
+    global doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -547,8 +548,10 @@ def main():
                     run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
         if warnings:
-            for i, param_list in enumerate(warnings):
-                compile_warning(i, param_list, ns.dump_warnings)
+            if warning_first_pass:
+                for i, param_list in enumerate(warnings):
+                    compile_warning(i, param_list, ns.dump_warnings)
+                warning_first_pass = False
             if not warning_errors:
                 for id in warning_ids:
                     run_function(buildouts, bldt, env, 'message', '%s %s' % (id, warning_file))
