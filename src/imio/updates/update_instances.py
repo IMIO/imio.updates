@@ -327,7 +327,8 @@ def compile_warning(i, params, dump_warnings):
                 warning_errors = True
 
     id = p_dic.pop('id', 'no_id')
-    warning_ids.insert(i, id)
+    if id not in warning_ids:
+        warning_ids.insert(i, id)
     if dump_warnings:
         warning_dic[id] = p_dic
         dump_var(warning_file, warning_dic)
