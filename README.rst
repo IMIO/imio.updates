@@ -61,6 +61,7 @@ List of available parameters:
   * id="maintenance-soon"
   * text="A maintenance operation will be done at 4pm."
   * activate=True
+  * delete=False
   * msg_type="" (info, significant, warning (default))
   * can_hide=True
   * start, end="YYYYMMDD-hhmm"

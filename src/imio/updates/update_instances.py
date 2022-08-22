@@ -314,9 +314,9 @@ def compile_warning(i, params, dump_warnings):
                 error("Problem in -w with param '%s': %s" % (part, msg))
                 warning_errors = True
     verbose("Message parameters: %s" % p_dic)
-    mandatory_params = ['id', 'activate']
+    mandatory_params = ['id', 'activate|delete']
     for param in mandatory_params:
-        if param not in p_dic:
+        if not any([prm in p_dic for prm in param.split('|')]):
             error("Parameter '%s' is required !" % param)
             warning_errors = True
     for dt in ('start', 'end'):

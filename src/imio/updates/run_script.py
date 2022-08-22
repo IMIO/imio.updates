@@ -115,11 +115,16 @@ def message():
     dic = {}
     load_var(warning_file, dic)
     params = dic[id]
+    delete = params.pop('delete', False)
     modified = False
     #verbose("Given dictionary: %s" % params)
     config = obj['messages-config']
-    # update existing message
-    if id in config:
+    if delete:
+        if id in config:
+            api.content.delete(config[id])
+            transaction.commit()
+        return
+    elif id in config:
         msg = config[id]
         verbose("Updating message with those values: %s" % params)
         if 'text' in params:
