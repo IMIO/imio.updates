@@ -4,9 +4,9 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from helpers import get_git_tag
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
+from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import load_var
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
