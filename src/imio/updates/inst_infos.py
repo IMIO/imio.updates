@@ -6,8 +6,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
-from imio.pyutils.system import get_git_tag
+# from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import load_var
+from imio.pyutils.system import runCommand
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
@@ -39,6 +40,17 @@ zopedir = os.path.expanduser("~")
 instdir = os.getenv('PWD')
 dumpfile = os.path.join(zopedir, 'inst_infos.dic')
 maindic = {}
+
+
+def get_git_tag(path):
+    # TODO removed it when imio.pyutils is at 0.25 version in instances
+    cmd = 'git --git-dir={}/.git describe --tags'.format(path)
+    (out, err, code) = runCommand(cmd)
+    if code or err:
+        error("Problem in command '{}': {}".format(cmd, err))
+        return 'NO TAG'
+    return out[0].strip('\n')
+
 
 # get instance name
 inst = instdir.split('/')[-1]
