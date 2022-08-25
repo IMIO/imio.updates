@@ -4,12 +4,10 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from imio.helpers.content import safe_encode
+from helpers import get_git_tag
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import load_var
-# from imio.pyutils.system import read_dir
-# from imio.pyutils.system import read_file
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
@@ -44,7 +42,8 @@ maindic = {}
 
 # get instance name
 inst = instdir.split('/')[-1]
-dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}, 'admins': []}}
+dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}, 'admins': [],
+              'tag': get_git_tag(instdir)}}
 infos = dic[inst]
 
 # get dumped dictionary

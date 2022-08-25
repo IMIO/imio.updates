@@ -3,6 +3,7 @@
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from helpers import get_git_tag
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import read_file
@@ -24,7 +25,6 @@ import time
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
-
 
 doit = False
 pattern = ''
@@ -180,15 +180,6 @@ def search_in_port_cfg(path, to_find, is_int=False):
 def get_instance_port(path, inst='instance1'):
     proc_http_name = "%s-http" % inst
     return search_in_port_cfg(path, proc_http_name, is_int=True)
-
-
-def get_git_state(path):
-    cmd = 'git --git-dir={}/.git describe --tags'.format(path)
-    (out, err, code) = runCommand(cmd)
-    if code or err:
-        error("Problem in command '{}': {}".format(cmd, err))
-        return 'NO TAG'
-    return out[0].strip('\n')
 
 
 def run_spv(bldt, path, plone_path, command, processes):
@@ -471,7 +462,7 @@ def main():
         buildouts[bldt]['plone'] = plone_path
         buildouts[bldt]['port'] = get_instance_port(path)
 
-        verbose("Buildout %s    (%s)" % (path, get_git_state(path)))
+        verbose("Buildout %s    (%s)" % (path, get_git_tag(path)))
         if stop:
             if 'i' in stop:
                 run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
