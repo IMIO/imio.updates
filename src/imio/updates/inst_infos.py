@@ -136,6 +136,10 @@ if tool == 'dms':
     infos['checks']['omt'] = u', '.join([tdic.get('mt_title', tdic.get('dtitle', u'')) for tdic in types])
     # solr
     infos['checks']['solr'] = int(api.portal.get_registry_record('collective.solr.active', default=0))
+    # temporary
+    dvcj = api.portal.get_registry_record('imio.dms.mail.dv_clean_days')
+    dvcd = api.portal.get_registry_record('imio.dms.mail.dv_clean_date')
+    infos['checks']['dvc'] = dvcj or dvcd or u''
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
