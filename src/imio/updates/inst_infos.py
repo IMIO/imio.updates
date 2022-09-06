@@ -139,7 +139,7 @@ if tool == 'dms':
     # temporary
     dvcj = api.portal.get_registry_record('imio.dms.mail.dv_clean_days')
     dvcd = api.portal.get_registry_record('imio.dms.mail.dv_clean_date')
-    infos['checks']['zdvc'] = dvcj or dvcd or u''
+    infos['checks']['zdvc'] = dvcj or (dvcd and dvcd.strftime('%Y-%m-%d')) or u''
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
