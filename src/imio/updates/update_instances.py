@@ -451,7 +451,6 @@ def main():
             batch_totals = var.split('=')[1].split(',')
         elif var.startswith('BATCH='):
             batches_conf['batch'] = int(var.split('=')[1])
-            envs.append(var)
         else:
             envs.append(var)
     if batch_totals:  # we check content
@@ -463,7 +462,6 @@ def main():
             batches_conf[matched.group(1)] = int(matched.group(2))
         if 'batch' not in batches_conf:
             batches_conf['batch'] = 25000
-            envs.append('BATCH=25000')
     elif 'batch' in batches_conf:
         error('BATCH parameter used without BATCH_TOTALS parameter !')
         sys.exit(1)
@@ -556,6 +554,7 @@ def main():
                             last = 1 + batches_conf[part] / batches_conf['batch']  # int part
                             if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
                                 last += 1
+                            new_env += ' BATCH={}'.format(batches_conf['batch'])
                         for batch in range(1, last):
                             ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
                             if ret != 0:
