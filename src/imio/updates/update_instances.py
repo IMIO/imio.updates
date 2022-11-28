@@ -403,7 +403,7 @@ def main():
                         help='To not dump warnings. Use dump file already there!')
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function). (can use "
-                             "multiple times -v). FUNC_PARTS is a special var (see docs).")
+                             "multiple times -v). FUNC_PARTS and BATCH_TOTALS are special var (see readme examples).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
     parser.add_argument('-t', '--traces', action='store_true', dest='traces', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
@@ -441,12 +441,32 @@ def main():
             restart += 'y'
 
     func_parts = []
+    batch_totals = []
+    batches_conf = {}
     envs = []
     for var in ns.vars:
         if var.startswith('FUNC_PARTS='):
             func_parts = [ltr for ltr in var.split('=')[1]]
+        elif var.startswith('BATCH_TOTALS='):
+            batch_totals = var.split('=')[1].split(',')
+        elif var.startswith('BATCH='):
+            batches_conf['batch'] = int(var.split('=')[1])
+            envs.append(var)
         else:
             envs.append(var)
+    if batch_totals:  # we check content
+        for val in batch_totals:
+            matched = re.match(r' *(\w) *: *(\d+) *$', val)
+            if not matched:
+                error("BATCH_TOTALS content check: '{}' not matched !".format(val))
+                sys.exit(1)
+            batches_conf[matched.group(1)] = int(matched.group(2))
+        if 'batch' not in batches_conf:
+            batches_conf['batch'] = 25000
+            envs.append('BATCH=25000')
+    elif 'batch' in batches_conf:
+        error('BATCH parameter used without BATCH_TOTALS parameter !')
+        sys.exit(1)
     env = ' '.join(envs)
 
     start = datetime.now()
@@ -531,10 +551,17 @@ def main():
                 if func_parts:
                     for part in func_parts:
                         new_env = 'FUNC_PART={} '.format(part) + env
-                        ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
-                        if ret != 0:
-                            error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
-                            break
+                        last = 2  # so range(1, 2) return [1]
+                        if part in batches_conf:
+                            last = 1 + batches_conf[part] / batches_conf['batch']  # int part
+                            if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
+                                last += 1
+                        for batch in range(1, last):
+                            ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
+                            if ret != 0:
+                                error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts),
+                                                                                              part))
+                                break
                 else:
                     run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
