@@ -558,9 +558,12 @@ def main():
                         for batch in range(1, last):
                             ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
                             if ret != 0:
-                                error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts),
-                                                                                              part))
                                 break
+                        else:
+                            continue
+                        # only here when doing a break
+                        error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
+                        break
                 else:
                     run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
 
