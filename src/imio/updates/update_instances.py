@@ -25,6 +25,7 @@ import time
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
+dev_mode = False
 
 doit = False
 pattern = ''
@@ -42,7 +43,6 @@ warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
 warning_first_pass = True
 warning_ids = []
 wait = False
-dev_mode = False
 traces = False
 
 
@@ -417,9 +417,12 @@ def main():
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
     wait, traces = ns.wait, ns.traces
+    start = datetime.now()
 
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
+    else:
+        verbose('NEW RUN on {}'.format(start.strftime('%Y%m%d-%H%M')))
     for sv in ns.superv or []:
         if sv == 'stop':
             stop += 'i'
@@ -467,7 +470,6 @@ def main():
         sys.exit(1)
     env = ' '.join(envs)
 
-    start = datetime.now()
     buildouts = get_running_buildouts()
     for bldt in sorted(buildouts.keys()):
         path = '%s/%s' % (basedir, bldt)
