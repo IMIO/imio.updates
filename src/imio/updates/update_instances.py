@@ -255,7 +255,7 @@ def run_make(buildouts, bldt, env, make):
     return code
 
 
-def run_function(buildouts, bldt, env, fct, params, script=function_script):
+def run_function(buildouts, bldt, env, fct, params, script=function_script, run_nb=0):
     path = buildouts[bldt]['path']
     os.chdir(path)
     cmd = (env and 'env {} '.format(env) or '')
@@ -263,13 +263,13 @@ def run_function(buildouts, bldt, env, fct, params, script=function_script):
     code = 0
     if doit:
         start = datetime.now()
-        verbose("=> Running '%s'" % cmd)
+        verbose("=> Running %s'%s'" % (run_nb and '{} '.format(run_nb) or '', cmd))
         (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
         if code:
             error("Problem running '%s' function: see %s/make.log file" % (fct, path))
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
-        verbose("=> Will be run '%s'" % cmd)
+        verbose("=> Will be run %s'%s'" % (run_nb and '{} '.format(run_nb) or '', cmd))
     return code
 
 
@@ -558,7 +558,8 @@ def main():
                                 last += 1
                             new_env += ' BATCH={}'.format(batches_conf['batch'])
                         for batch in range(1, last):
-                            ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
+                            ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]),
+                                               run_nb=(last > 2 and batch or 0))
                             if ret != 0:
                                 break
                         else:
