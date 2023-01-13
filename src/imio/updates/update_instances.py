@@ -273,6 +273,31 @@ def run_function(buildouts, bldt, env, fct, params, script=function_script, run_
     return code
 
 
+def run_function_parts(func_parts, batches_conf, params):
+    """Run function multiple time if needed"""
+    if func_parts:
+        env = params['env']
+        for part in func_parts:
+            params['env'] = 'FUNC_PART={} '.format(part) + env
+            last = 2  # so range(1, 2) return [1]
+            if part in batches_conf:
+                last = 1 + batches_conf[part] / batches_conf['batch']  # int part
+                if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
+                    last += 1
+                params['env'] += ' BATCH={}'.format(batches_conf['batch'])
+            for batch in range(1, last):
+                ret = run_function(run_nb=(last > 2 and batch or 0), **params)
+                if ret != 0:
+                    break
+            else:
+                continue
+            # only here when doing a break
+            error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
+            break
+    else:
+        run_function(**params)
+
+
 def run_develop(buildouts, bldt, products):
     path = buildouts[bldt]['path']
     os.chdir(path)
@@ -543,32 +568,15 @@ def main():
         if ns.custom:
             for param_list in ns.custom:
                 # function is optional or can be a param so we need to handle it
-                run_function(buildouts, bldt, env, script=param_list[0], fct=''.join(param_list[1:2]),
-                             params=' '.join(param_list[2:]))
+                params = {'buildouts': buildouts, 'bldt': bldt, 'env': env, 'script': param_list[0],
+                          'fct': ''.join(param_list[1:2]), 'params': ' '.join(param_list[2:])}
+                run_function_parts(func_parts, batches_conf, params)
 
         if functions:
             for param_list in functions:
-                if func_parts:
-                    for part in func_parts:
-                        new_env = 'FUNC_PART={} '.format(part) + env
-                        last = 2  # so range(1, 2) return [1]
-                        if part in batches_conf:
-                            last = 1 + batches_conf[part] / batches_conf['batch']  # int part
-                            if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
-                                last += 1
-                            new_env += ' BATCH={}'.format(batches_conf['batch'])
-                        for batch in range(1, last):
-                            ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]),
-                                               run_nb=(last > 2 and batch or 0))
-                            if ret != 0:
-                                break
-                        else:
-                            continue
-                        # only here when doing a break
-                        error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
-                        break
-                else:
-                    run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
+                params = {'buildouts': buildouts, 'bldt': bldt, 'env': env,
+                          'fct': param_list[0], 'params': ' '.join(param_list[1:])}
+                run_function_parts(func_parts, batches_conf, params)
 
         if warnings:
             if warning_first_pass:
