@@ -8,6 +8,7 @@ import os
 import sys
 import transaction
 
+
 LOGGER_LEVEL = 20  # 30=warning, 20=info, 10=debug
 
 
@@ -84,6 +85,7 @@ def run_upgrade():
         sys.exit(0)
     profile = sys.argv[4]
     from imio.migrator.migrator import Migrator
+
     # obj is plone site
     mig = Migrator(obj)
     if profile == '_all_':
@@ -97,6 +99,7 @@ def run_upgrade():
 
 def auth():
     from Products.ExternalMethod.ExternalMethod import manage_addExternalMethod
+
     # we add the external method cputils_install
     if not hasattr(app, 'cputils_install'):
         manage_addExternalMethod(app, 'cputils_install', '', 'CPUtils.utils', 'install')
@@ -110,7 +113,8 @@ def auth():
 
 
 def message():
-    from collective.messagesviewlet.utils import add_message, _richtextval
+    from collective.messagesviewlet.utils import _richtextval
+    from collective.messagesviewlet.utils import add_message
     id, warning_file = sys.argv[4:6]
     dic = {}
     load_var(warning_file, dic)

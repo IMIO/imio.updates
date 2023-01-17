@@ -4,9 +4,9 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+# from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
-# from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import load_var
 from imio.pyutils.system import runCommand
 from plone import api
@@ -16,6 +16,7 @@ from Products.CPUtils.Extensions.utils import tobytes
 import json
 import os
 import sys
+
 
 types_to_count = {
     'dms':

@@ -1,16 +1,18 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import re
-import sys
-import transaction
-
 from imio.helpers.security import setup_logger
-from imio.pyutils.system import error, verbose
+from imio.pyutils.system import error
+from imio.pyutils.system import verbose
 from plone import api
 from Products.CPUtils.Extensions.utils import load_user_properties
 from Products.CPUtils.Extensions.utils import recreate_users_groups
 from Products.CPUtils.Extensions.utils import store_user_properties
+
+import re
+import sys
+import transaction
+
 
 # Parameters check
 if len(sys.argv) < 3 or not sys.argv[2].endswith('various_scripts.py'):
