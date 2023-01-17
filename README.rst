@@ -61,10 +61,13 @@ List of available parameters:
   * id="maintenance-soon"
   * text="A maintenance operation will be done at 4pm."
   * activate=True
+  * delete=False
   * msg_type="" (info, significant, warning (default))
   * can_hide=True
   * start, end="YYYYMMDD-hhmm"
   * ...
+
+* -wnd, --warning-no-dump : do not write disk message file. The existing one is used.
 
 * -c, --custom : run a custom script with arguments.
 
@@ -72,7 +75,7 @@ List of available parameters:
   * Other parameters are arguments to be given to the script when called.
 
 * -v, --vars : Define env variables like XX=YY, used as: env XX=YY make (or function).
-  (can use multiple times -v). FUNC_PARTS is a special var (see docs).
+  (can use multiple times -v). FUNC_PARTS and BATCH_TOTALS are special var (see examples).
 
 * -t, --traces : Add more traces
 
@@ -100,6 +103,8 @@ Tips & examples
 * -c ``scripts/my_custom.py param1 param2`` : calls the scripts at buildout/scripts/my_custom.py with param1 and param2 as arguments
 * -v FUNC_PARTS=abcde : calls -f multiple time for each letter passed as ENV FUNC_PART=a.
   Can be used to split migration in multiple runs.
+* -v FUNC_PARTS=abc -v BATCH_TOTALS=b:2100,c:2000 -v BATCH=1000 : calls the specified parts in batch following totals.
+  Sub calls as ENV FUNC_PART=a (one time), ENV FUNC_PART=b (3 times), ENV FUNC_PART=C (2 times)
 
 Multiple options:
 

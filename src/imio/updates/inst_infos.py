@@ -4,12 +4,11 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from imio.helpers.content import safe_encode
+# from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import load_var
-# from imio.pyutils.system import read_dir
-# from imio.pyutils.system import read_file
+from imio.pyutils.system import runCommand
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
@@ -43,9 +42,21 @@ instdir = os.getenv('PWD')
 dumpfile = os.path.join(zopedir, 'inst_infos.dic')
 maindic = {}
 
+
+def get_git_tag(path):
+    # TODO removed it when imio.pyutils is at 0.25 version in instances
+    cmd = 'git --git-dir={}/.git describe --tags'.format(path)
+    (out, err, code) = runCommand(cmd)
+    if code or err:
+        error("Problem in command '{}': {}".format(cmd, err))
+        return 'NO TAG'
+    return out[0].strip('\n')
+
+
 # get instance name
 inst = instdir.split('/')[-1]
-dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}, 'admins': []}}
+dic = {inst: {'types': {}, 'users': 0, 'groups': 0, 'fs_sz': 0, 'bl_sz': 0, 'checks': {}, 'admins': [],
+              'tag': get_git_tag(instdir)}}
 infos = dic[inst]
 
 # get dumped dictionary
@@ -126,6 +137,10 @@ if tool == 'dms':
     infos['checks']['omt'] = u', '.join([tdic.get('mt_title', tdic.get('dtitle', u'')) for tdic in types])
     # solr
     infos['checks']['solr'] = int(api.portal.get_registry_record('collective.solr.active', default=0))
+    # temporary
+    dvcj = api.portal.get_registry_record('imio.dms.mail.dv_clean_days')
+    dvcd = api.portal.get_registry_record('imio.dms.mail.dv_clean_date')
+    infos['checks']['zdvc'] = dvcj or (dvcd and dvcd.strftime('%Y-%m-%d')) or u''
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa

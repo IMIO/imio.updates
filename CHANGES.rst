@@ -8,6 +8,8 @@ Changelog
   [sgeulette]
 - Added a QUERY_YEAR env var to inst_info to be able to count content created for a specific year.
   [aduchene]
+- Can call multiple times a function with FUNC_PARTS variable and by batch with BATCH_TOTALS AND BATCH values
+  [sgeulette]
 
 0.2 (2022-02-12)
 ----------------

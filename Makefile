@@ -3,7 +3,7 @@
 
 .PHONY: setup
 setup:
-	virtualenv -p python2 .
+	if command -v virtualenv-2.7; then virtualenv-2.7 . ; elif command -v python2 >/dev/null && command -v virtualenv; then virtualenv -p python2 . ; fi
 	./bin/pip install --upgrade pip
 	./bin/pip install -r requirements.txt -e .
 	./bin/update_instances

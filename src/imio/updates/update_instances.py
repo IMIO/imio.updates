@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
+from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import read_file
 from imio.pyutils.system import runCommand
 from imio.pyutils.system import verbose
@@ -16,6 +17,7 @@ import requests as requests
 import shutil
 import smtplib
 import socket
+import sys
 import time
 
 
@@ -23,7 +25,7 @@ import time
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
-
+dev_mode = False
 
 doit = False
 pattern = ''
@@ -41,7 +43,6 @@ instance = 'instance-debug'
 stop = ''
 restart = ''
 wait = False
-dev_mode = False
 traces = False
 
 
@@ -181,15 +182,6 @@ def get_instance_port(path, inst='instance1'):
     return search_in_port_cfg(path, proc_http_name, is_int=True)
 
 
-def get_git_state(path):
-    cmd = 'git --git-dir={}/.git describe --tags'.format(path)
-    (out, err, code) = runCommand(cmd)
-    if code or err:
-        error("Problem in command '{}': {}".format(cmd, err))
-        return 'NO TAG'
-    return out[0].strip('\n')
-
-
 def run_spv(bldt, path, plone_path, command, processes):
     for proc in processes:
         if dev_mode:
@@ -263,7 +255,7 @@ def run_make(buildouts, bldt, env, make):
     return code
 
 
-def run_function(buildouts, bldt, env, script, params):
+def run_function(buildouts, bldt, env, script, params, run_nb=0):
     path = buildouts[bldt]['path']
     os.chdir(path)
     cmd = (env and 'env {} '.format(env) or '')
@@ -272,14 +264,39 @@ def run_function(buildouts, bldt, env, script, params):
     code = 0
     if doit:
         start = datetime.now()
-        verbose("=> Running '%s'" % cmd)
+        verbose("=> Running %s'%s'" % (run_nb and '{} '.format(run_nb) or '', cmd))
         (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
         if code:
             error("Problem running '%s' function: see %s/make.log file" % (script, path))
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
-        verbose("=> Will be run '%s'" % cmd)
+        verbose("=> Will be run %s'%s'" % (run_nb and '{} '.format(run_nb) or '', cmd))
     return code
+
+
+def run_function_parts(func_parts, batches_conf, params):
+    """Run function multiple time if needed"""
+    if func_parts:
+        env = params['env']
+        for part in func_parts:
+            params['env'] = 'FUNC_PART={} '.format(part) + env
+            last = 2  # so range(1, 2) return [1]
+            if part in batches_conf:
+                last = 1 + batches_conf[part] / batches_conf['batch']  # int part
+                if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
+                    last += 1
+                params['env'] += ' BATCH={}'.format(batches_conf['batch'])
+            for batch in range(1, last):
+                ret = run_function(run_nb=(last > 2 and batch or 0), **params)
+                if ret != 0:
+                    break
+            else:
+                continue
+            # only here when doing a break
+            error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
+            break
+    else:
+        run_function(**params)
 
 
 def run_develop(buildouts, bldt, products):
@@ -313,9 +330,9 @@ def compile_warning(i, params):
                 error("Problem in -w with param '%s': %s" % (part, msg))
                 return ''
     verbose("Message parameters: %s" % p_dic)
-    mandatory_params = ['id', 'activate']
+    mandatory_params = ['id', 'activate|delete']
     for param in mandatory_params:
-        if param not in p_dic:
+        if not any([prm in p_dic for prm in param.split('|')]):
             error("Parameter '%s' is required !" % param)
             return ''
 
@@ -409,9 +426,11 @@ def main():
                              ' * activate=True'
                              ' * ...'
                         ),
+    parser.add_argument('-wnd', '--warning-no-dump', action='store_false', dest='dump_warnings', default="True",
+                        help='To not dump warnings. Use dump file already there!')
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function). (can use "
-                             "multiple times -v). FUNC_PARTS is a special var (see docs).")
+                             "multiple times -v). FUNC_PARTS and BATCH_TOTALS are special var (see readme examples).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
     parser.add_argument('-t', '--traces', action='store_true', dest='traces', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
@@ -425,9 +444,12 @@ def main():
     doit, buildout, instance, pattern = ns.doit, ns.buildout, ns.instance, ns.pattern
     make, functions, auth, warnings = ns.make, ns.functions, ns.auth, ns.warnings
     wait, traces = ns.wait, ns.traces
+    start = datetime.now()
 
     if not doit:
         verbose('Simulation mode: use -h to see script usage.')
+    else:
+        verbose('NEW RUN on {}'.format(start.strftime('%Y%m%d-%H%M')))
     for sv in ns.superv or []:
         if sv == 'stop':
             stop += 'i'
@@ -449,15 +471,32 @@ def main():
             restart += 'y'
 
     func_parts = []
+    batch_totals = []
+    batches_conf = {}
     envs = []
     for var in ns.vars:
         if var.startswith('FUNC_PARTS='):
             func_parts = [ltr for ltr in var.split('=')[1]]
+        elif var.startswith('BATCH_TOTALS='):
+            batch_totals = var.split('=')[1].split(',')
+        elif var.startswith('BATCH='):
+            batches_conf['batch'] = int(var.split('=')[1])
         else:
             envs.append(var)
+    if batch_totals:  # we check content
+        for val in batch_totals:
+            matched = re.match(r' *(\w) *: *(\d+) *$', val)
+            if not matched:
+                error("BATCH_TOTALS content check: '{}' not matched !".format(val))
+                sys.exit(1)
+            batches_conf[matched.group(1)] = int(matched.group(2))
+        if 'batch' not in batches_conf:
+            batches_conf['batch'] = 25000
+    elif 'batch' in batches_conf:
+        error('BATCH parameter used without BATCH_TOTALS parameter !')
+        sys.exit(1)
     env = ' '.join(envs)
 
-    start = datetime.now()
     buildouts = get_running_buildouts()
     for bldt in sorted(buildouts.keys()):
         path = '%s/%s' % (basedir, bldt)
@@ -470,7 +509,7 @@ def main():
         buildouts[bldt]['plone'] = plone_path
         buildouts[bldt]['port'] = get_instance_port(path)
 
-        verbose("Buildout %s    (%s)" % (path, get_git_state(path)))
+        verbose("Buildout %s    (%s)" % (path, get_git_tag(path)))
         if stop:
             if 'i' in stop:
                 run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
@@ -531,19 +570,15 @@ def main():
         if ns.custom:
             for param_list in ns.custom:
                 # function is optional or can be a param so we need to handle it
-                run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
+                params = {'buildouts': buildouts, 'bldt': bldt, 'env': env, 'script': param_list[0],
+                          'fct': ''.join(param_list[1:2]), 'params': ' '.join(param_list[2:])}
+                run_function_parts(func_parts, batches_conf, params)
 
         if functions:
             for param_list in functions:
-                if func_parts:
-                    for part in func_parts:
-                        new_env = 'FUNC_PART={} '.format(part) + env
-                        ret = run_function(buildouts, bldt, new_env, param_list[0], ' '.join(param_list[1:]))
-                        if ret != 0:
-                            error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
-                            break
-                else:
-                    run_function(buildouts, bldt, env, param_list[0], ' '.join(param_list[1:]))
+                params = {'buildouts': buildouts, 'bldt': bldt, 'env': env,
+                          'fct': param_list[0], 'params': ' '.join(param_list[1:])}
+                run_function_parts(func_parts, batches_conf, params)
 
         if warnings:
             for i, param_list in enumerate(warnings):
