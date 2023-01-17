@@ -1,22 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import argparse
-import os
-import re
-import shutil
-import smtplib
-import socket
-import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-import requests as requests
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import read_file
 from imio.pyutils.system import runCommand
 from imio.pyutils.system import verbose
+
+import argparse
+import os
+import re
+import requests as requests
+import shutil
+import smtplib
+import socket
+import time
+
 
 # import sys
 # sys.path[0:0] = [

@@ -18,6 +18,7 @@ import json
 import os
 import sys
 
+
 types_to_count = {
     'dms':
     {'portal_type':
