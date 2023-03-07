@@ -4,6 +4,7 @@ from datetime import datetime
 from plone import api
 
 import argparse
+import os
 import logging
 import transaction
 
