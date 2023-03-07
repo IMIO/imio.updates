@@ -3,6 +3,7 @@ from __future__ import print_function
 from plone import api
 
 import argparse
+import os
 import logging
 import transaction
 
