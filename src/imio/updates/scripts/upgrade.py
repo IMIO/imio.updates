@@ -11,17 +11,20 @@ import transaction
 LOGGER_LEVEL = 20
 
 
-def run_upgrade(profile, steps=[]):
+def run_upgrade(profiles, steps=[]):
     from imio.migrator.migrator import Migrator
-
     # obj is plone site
     mig = Migrator(obj)
-    if profile == '_all_':
-        verbose('Running all upgrades on %s' % (obj.absolute_url_path()))
-        mig.upgradeAll()
-    else:
+    profile_to_apply = ['Products.CMFPlone:plone'] + profiles.split(' ')
+    for profile in profile_to_apply:
         verbose('Running "%s" upgrade on %s' % (profile, obj.absolute_url_path()))
         mig.upgradeProfile(profile, olds=steps)
+        if profile == '_all_':
+            verbose('Running all upgrades on %s' % (obj.absolute_url_path()))
+            mig.upgradeAll()
+        else:
+            verbose('Running "%s" upgrade on %s' % (profile, obj.absolute_url_path()))
+            mig.upgradeProfile(profile, olds=steps)
     transaction.commit()
 
 
