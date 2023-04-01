@@ -258,9 +258,10 @@ def repair_fatals(buildouts, fatals, bldt, path, plone_path):
     for fatal in fatals:
         cmd = 'ps -ef | grep /{}/bin/{}| grep /srv/instances |tr -s " " |cut -f 2,3,8,9 -d " "'.format(bldt, fatal)
         (out, err, code) = runCommand(cmd)
-        if out:  # Found another process
-            line = out[0].strip('\n')
-            pid, ppid, python, process = line.split()
+        for line in out:
+            pid, ppid, python, process = line.strip('\n').split()
+            if not process.endswith('/bin/{}'.format(fatal)):
+                continue
             verbose("=> Repair FATAL: found another process '{}' with parent id '{}'".format(process, ppid))
             verbose("=> Repair FATAL: will kill pid '{}' and start '{}'".format(pid, fatal))
             cmd = "bash -c 'kill -s SIGTERM -- -{}'".format(pid)
