@@ -44,6 +44,7 @@ warning_first_pass = True
 warning_ids = []
 wait = False
 traces = False
+ns = None
 
 
 def trace(msg):
@@ -92,6 +93,39 @@ def get_running_buildouts():
             escaped.append(bldt)
         else:
             buildouts[bldt]['spv'].sort(key=lambda x: starting.index(x))
+    if escaped:
+        verbose("Escaped buildouts: %s" % ', '.join(sorted(escaped)))
+    return buildouts
+
+
+def get_supervised_buildouts():
+    """ Get supervised buildouts and instances"""
+    cmd = 'supervisorctl status | grep -v STOPPED| tr -s " " |cut -f 1,2 -d " " | sort -r'
+    (out, err, code) = runCommand(cmd)
+    if dev_mode:
+        # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
+        out = ['TAGS/dmsmail3.0-zeoserver RUNNING\n', 'TAGS/dmsmail3.0-instance1 RUNNING\n']
+        # out = ['dmsmail_solr-instance1 RUNNING\n']
+    buildouts = {}
+    # getting buildout and started programs
+    for line in out:
+        name, status = line.strip('\n').split()
+        for started in starting:
+            if name.endswith('-%s' % started):
+                bldt = name[:-(len(started)+1)]
+                if bldt not in buildouts:
+                    buildouts[bldt] = {'spv': [(started, status)]}
+                else:
+                    buildouts[bldt]['spv'].append((started, status))
+    # escape if pattern not matched
+    # order started following defined list
+    escaped = []
+    for bldt in buildouts.keys():
+        if pattern and not re.match(pattern, bldt, re.I):
+            del buildouts[bldt]
+            escaped.append(bldt)
+        else:
+            buildouts[bldt]['spv'].sort(key=lambda x: starting.index(x[0]))
     if escaped:
         verbose("Escaped buildouts: %s" % ', '.join(sorted(escaped)))
     return buildouts
@@ -217,6 +251,28 @@ def run_spv(bldt, path, plone_path, command, processes):
                         error(str(err))
         else:
             verbose("=> Will be run '%s'" % cmd)
+
+
+def repair_fatals(buildouts, fatals, bldt, path, plone_path):
+    change = False
+    for fatal in fatals:
+        cmd = 'ps -ef | grep /{}/bin/{}| grep /srv/instances |tr -s " " |cut -f 2,3,8,9 -d " "'.format(bldt, fatal)
+        (out, err, code) = runCommand(cmd)
+        if out:  # Found another process
+            line = out[0].strip('\n')
+            pid, ppid, python, process = line.split()
+            verbose("=> Repair FATAL: found another process '{}' with parent id '{}'".format(process, ppid))
+            verbose("=> Repair FATAL: will kill pid '{}' and start '{}'".format(pid, fatal))
+            cmd = "bash -c 'kill -s SIGTERM -- -{}'".format(pid)
+            if doit:
+                (out, err, code) = runCommand(cmd)
+                if not code:
+                    run_spv(bldt, path, plone_path, 'start', [fatal])
+                    time.sleep(5)
+                    change = True
+    if change:
+        new_buildouts = get_supervised_buildouts()
+        buildouts[bldt]['spv'] = new_buildouts[bldt]['spv']
 
 
 def run_buildout(buildouts, bldt):
@@ -371,7 +427,7 @@ def email(buildouts, recipient):
 
 
 def main():
-    global doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
+    global ns, doit, pattern, instance, stop, restart, warning_first_pass, wait, traces
     parser = argparse.ArgumentParser(description='Run some operations on zope instances.')
     parser.add_argument('-d', '--doit', action='store_true', dest='doit', help='To apply changes')
     parser.add_argument('-b', '--buildout', action='store_true', dest='buildout', help='To run buildout')
@@ -391,7 +447,7 @@ def main():
                         )
     parser.add_argument('-s', '--superv', dest='superv', action='append',
                         choices=['stop', 'restart', 'stopall', 'restartall', 'stopworker', 'restartworker', 'stopzeo',
-                                 'startzeo', 'restartzeo'],
+                                 'startzeo', 'restartzeo', 'fatal'],
                         help="To run supervisor command:"
                              " * stop : stop the instances (not zeo)."
                              " * restart : restart the instances and waits for it to be up and running (after "
@@ -402,7 +458,9 @@ def main():
                              " * restartworker : restart the worker instances (after buildout if `-b` was provided)."
                              " * stopzeo : stop the zeo."
                              " * startzeo : start all supervised zeo. (after buildout if `-b` was provided)"
-                             " * restartzeo : restart the zeo instance (after buildout if `-b` was provided).")
+                             " * restartzeo : restart the zeo instance (after buildout if `-b` was provided)."
+                             " * fatal : restart all FATAL process. (after buildout if `-b` was provided)"
+                        )
     parser.add_argument('-i', '--instance', dest='instance', default='instance-debug',
                         help='instance name used to run function or make (default instance-debug)')
     parser.add_argument('-a', '--auth', dest='auth', choices=['0', '1', '8', '9'], default='9',
@@ -467,6 +525,8 @@ def main():
             restart += 'z'
         elif sv == 'startzeo':
             restart += 'y'
+        elif sv == 'fatal':
+            restart += 'f'
 
     func_parts = []
     batch_totals = []
@@ -495,7 +555,8 @@ def main():
         sys.exit(1)
     env = ' '.join(envs)
 
-    buildouts = get_running_buildouts()
+    # buildouts = get_running_buildouts()
+    buildouts = get_supervised_buildouts()
     for bldt in sorted(buildouts.keys()):
         path = '%s/%s' % (basedir, bldt)
         if not os.path.exists(path):
@@ -508,17 +569,22 @@ def main():
         buildouts[bldt]['port'] = get_instance_port(path)
 
         verbose("Buildout %s    (%s)" % (path, get_git_tag(path)))
+        if 'f' in restart:
+            fatals = [p for p, st in buildouts[bldt]['spv'] if st == 'FATAL']
+            if fatals:
+                repair_fatals(buildouts, fatals, bldt, path, plone_path)
+
         if stop:
             if 'i' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p, st in buildouts[bldt]['spv']
                                                                   if p.startswith('instance')]))
             if 'a' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']]))
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p, st in buildouts[bldt]['spv']]))
             if 'w' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed([p for p in buildouts[bldt]['spv']
+                run_spv(bldt, path, plone_path, 'stop', reversed([p for p, st in buildouts[bldt]['spv']
                                                                   if p.startswith('worker')]))
             if 'z' in stop:
-                run_spv(bldt, path, plone_path, 'stop', reversed(['zeoserver']))
+                run_spv(bldt, path, plone_path, 'stop', ['zeoserver'])
 
         if ns.make0:
             for param_list in ns.make0:
@@ -531,21 +597,23 @@ def main():
             run_develop(buildouts, bldt, ns.develop)
         if restart:
             if 'z' in restart or 'y' in restart:
-                if 'zeoserver' in buildouts[bldt]['spv']:
+                if [p for p, st in buildouts[bldt]['spv'] if p == 'zeoserver' and st == 'RUNNING']:
                     run_spv(bldt, path, plone_path, 'restart', ['zeoserver'])
                 else:
                     run_spv(bldt, path, plone_path, 'start', ['zeoserver'])
-                    buildouts[bldt]['spv'].append('zeoserver')
+                    buildouts[bldt]['spv'] = [tup for tup in buildouts[bldt]['spv'] if tup[0] != 'zeoserver']
+                    buildouts[bldt]['spv'].insert(0, ('zeoserver', 'RUNNING'))
             if 'a' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']])
+                run_spv(bldt, path, plone_path, 'restart', [p for p, st in buildouts[bldt]['spv']
+                                                            if st == 'RUNNING'])
             if 'i' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
-                                                            if p.startswith('instance')])
+                run_spv(bldt, path, plone_path, 'restart', [p for p, st in buildouts[bldt]['spv']
+                                                            if p.startswith('instance') and st == 'RUNNING'])
             if 'w' in restart:
-                run_spv(bldt, path, plone_path, 'restart', [p for p in buildouts[bldt]['spv']
-                                                            if p.startswith('worker')])
+                run_spv(bldt, path, plone_path, 'restart', [p for p, st in buildouts[bldt]['spv']
+                                                            if p.startswith('worker') and st == 'RUNNING'])
 
-        if 'zeoserver' not in buildouts[bldt]['spv']:
+        if [p for p, st in buildouts[bldt]['spv'] if p == 'zeoserver' and st != 'RUNNING']:
             error("Zeoserver isn't running")
             if not instance:
                 continue
