@@ -101,11 +101,11 @@ def check_wsclient():
     """Check if wsclient is activated """
     prefix = 'imio.pm.wsclient.browser.settings.IWS4PMClientSettings'
     if not api.portal.get_registry_record('{}.pm_url'.format(prefix), default=False):
-        return False
+        return ''
     gen_act = api.portal.get_registry_record('{}.generated_actions'.format(prefix))
     if gen_act and gen_act[0].get('permissions') and gen_act[0]['permissions'] != 'Modify view template':
-        return True
-    return False
+        return api.portal.get_registry_record('{}.pm_url'.format(prefix))
+    return ''
 
 
 # checks
@@ -128,7 +128,7 @@ if tool == 'dms':
     infos['checks']['assigned_user'] = api.portal.get_registry_record('imio.dms.mail.browser.settings.'
                                                                       'IImioDmsMailConfig.assigned_user_check')
     # get wsclient option
-    infos['checks']['pm'] = int(check_wsclient())
+    infos['checks']['pm'] = check_wsclient()
     # get query next prev max result value
     infos['checks']['qnp'] = int(api.portal.get_registry_record('collective.querynextprev.maxresults') or 0)
     # temporary
@@ -152,7 +152,7 @@ if tool == 'pst':
             count += 1
     infos['checks']['budget'] = count
     # get wsclient option
-    infos['checks']['pm'] = int(check_wsclient())
+    infos['checks']['pm'] = check_wsclient()
 
 # get users count, only keep users that are in a group
 users = portal.portal_membership.searchForMembers()  # ok with wca
@@ -191,7 +191,7 @@ try:
     if size > infos['fs_sz']:
         size -= infos['fs_sz']
         infos['bl_sz'] = size
-except Exception, msg:
+except Exception as msg:
     error(u".sizes.json not valid in '{}': '{}'".format(instdir, msg))
 
 # vardir = os.path.join(instdir, 'var')
