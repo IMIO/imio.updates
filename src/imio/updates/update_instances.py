@@ -550,7 +550,7 @@ def main():
                 sys.exit(1)
             batches_conf[matched.group(1)] = int(matched.group(2))
         if 'batch' not in batches_conf:
-            batches_conf['batch'] = 25000
+            batches_conf['batch'] = 10000
     elif 'batch' in batches_conf:
         error('BATCH parameter used without BATCH_TOTALS parameter !')
         sys.exit(1)
