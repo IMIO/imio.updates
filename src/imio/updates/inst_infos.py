@@ -154,6 +154,9 @@ if tool == 'pst':
     # get wsclient option
     infos['checks']['pm'] = check_wsclient()
 
+# get catalog count
+infos['catalog'] = len(catalog.unrestrictedSearchResults(path='/'))
+
 # get users count, only keep users that are in a group
 users = portal.portal_membership.searchForMembers()  # ok with wca
 count = 0
