@@ -571,7 +571,7 @@ def main():
 
         verbose("Buildout %s    (%s)" % (path, get_git_tag(path)))
         if 'f' in restart:
-            fatals = [p for p, st in buildouts[bldt]['spv'] if st == 'FATAL']
+            fatals = [p for p, st in buildouts[bldt]['spv'] if st in ('FATAL', 'EXITED')]
             if fatals:
                 repair_fatals(buildouts, fatals, bldt, path, plone_path)
 
