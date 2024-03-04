@@ -331,7 +331,12 @@ def run_function(buildouts, bldt, env, fct, params, script=function_script, run_
 
 
 def run_function_parts(func_parts, batches_conf, params):
-    """Run function multiple time if needed"""
+    """Run function multiple time if needed.
+
+    :param func_parts: letters list where one letter is the part name
+    :param batches_conf: batching dict {'batch': 1000, 'A': 5000, 'B': 8000, ...} with part totals
+    :param params: dict {'buildouts': dict, 'bldt': bldt, 'env': env, 'script': '', 'fct': '', 'params': '', ...}
+    """
     if func_parts:
         env = params['env']
         for part in func_parts:
@@ -343,6 +348,8 @@ def run_function_parts(func_parts, batches_conf, params):
                     last += 1
                 params['env'] += ' BATCH={}'.format(batches_conf['batch'])
             for batch in range(1, last):
+                if ' BATCH=' in params['env'] and batch == (last-1):
+                    params['env'] += ' BATCH_LAST=1'
                 ret = run_function(run_nb=(last > 2 and batch or 0), **params)
                 if ret != 0:
                     break
