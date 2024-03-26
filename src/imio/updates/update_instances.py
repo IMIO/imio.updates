@@ -29,7 +29,12 @@ dev_mode = False
 
 doit = False
 pattern = ''
-function_script = os.path.join(os.path.dirname(__file__), 'run_script.py')
+function_scripts = {
+    'step': os.path.join(os.path.dirname(__file__), "scripts", "step.py"),
+    'upgrade': os.path.join(os.path.dirname(__file__), "scripts", "upgrade.py"),
+    'auth': os.path.join(os.path.dirname(__file__), "scripts", "auth.py"),
+    'message': os.path.join(os.path.dirname(__file__), "scripts", "message.py"),
+}
 basedir = '/srv/instances'
 starting = ['zeoserver', 'instance1', 'instance2', 'instance3', 'instance4', 'libreoffice',
             'worker-amqp', 'worker-async']
@@ -37,11 +42,6 @@ buildout = False
 instance = 'instance-debug'
 stop = ''
 restart = ''
-warning_dic = {}
-warning_errors = False
-warning_file = os.path.join(basedir, 'messagesviewlet_dump.txt')
-warning_first_pass = True
-warning_ids = []
 wait = False
 traces = False
 ns = None
@@ -312,18 +312,19 @@ def run_make(buildouts, bldt, env, make):
     return code
 
 
-def run_function(buildouts, bldt, env, fct, params, script=function_script, run_nb=0):
+def run_function(buildouts, bldt, env, script, params, run_nb=0):
     path = buildouts[bldt]['path']
     os.chdir(path)
     cmd = (env and 'env {} '.format(env) or '')
-    cmd += '%s/bin/%s -O%s run %s %s %s' % (path, instance, buildouts[bldt]['plone'], script, fct, params)
+    actual_script = script in function_scripts and function_scripts[script] or script
+    cmd += '%s/bin/%s -O %s run %s %s' % (path, instance, buildouts[bldt]['plone'], actual_script, params)
     code = 0
     if doit:
         start = datetime.now()
         verbose("=> Running %s'%s'" % (run_nb and '{} '.format(run_nb) or '', cmd))
         (out, err, code) = runCommand(cmd, outfile='%s/make.log' % path)
         if code:
-            error("Problem running '%s' function: see %s/make.log file" % (fct, path))
+            error("Problem running '%s' function: see %s/make.log file" % (script, path))
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
         verbose("=> Will be run %s'%s'" % (run_nb and '{} '.format(run_nb) or '', cmd))
@@ -377,8 +378,7 @@ def run_develop(buildouts, bldt, products):
     return code
 
 
-def compile_warning(i, params, dump_warnings):
-    global warning_errors
+def compile_warning(i, params):
     p_dic = {}
     import re
     regex = re.compile(r'[^"\s]+(?:"[^"\\]*(?:\\.[^"\\]*)*")*', re.VERBOSE)
@@ -392,27 +392,29 @@ def compile_warning(i, params, dump_warnings):
                 p_dic.update(eval('dict(%s)' % part))
             except Exception as msg:
                 error("Problem in -w with param '%s': %s" % (part, msg))
-                warning_errors = True
+                return ''
     verbose("Message parameters: %s" % p_dic)
     mandatory_params = ['id', 'activate|delete']
     for param in mandatory_params:
         if not any([prm in p_dic for prm in param.split('|')]):
             error("Parameter '%s' is required !" % param)
-            warning_errors = True
-    for dt in ('start', 'end'):
-        if dt in p_dic:
-            try:
-                p_dic[dt] = datetime.strptime(p_dic[dt], '%Y%m%d-%H%M')
-            except ValueError as msg:
-                error("Cannot compile datetime '%s' : %s" % (p_dic[dt], msg))
-                warning_errors = True
+            return ''
 
-    id = p_dic.pop('id', 'no_id')
-    if id not in warning_ids:
-        warning_ids.insert(i, id)
-    if dump_warnings:
-        warning_dic[id] = p_dic
-        dump_var(warning_file, warning_dic)
+    res = '{} --activate {}'.format(p_dic.pop('id'), p_dic.pop('activate') and 1 or 0)
+    if 'text' in p_dic:
+        res += ' --message "{}"'.format(p_dic['text'])
+    if 'msg_type' in p_dic:
+        res += ' --type {}'.format(p_dic['msg_type'])
+    if 'can_hide' in p_dic:
+        res += ' --hide {}'.format(p_dic['can_hide'] and 1 or 0)
+    if 'title' in p_dic:
+        res += ' --title "{}"'.format(p_dic['title'])
+    if 'start' in p_dic:
+        res += ' --start {}'.format(p_dic['start'])
+    if 'end' in p_dic:
+        res += ' --end {}'.format(p_dic['end'])
+
+    return res
 
 
 def email(buildouts, recipient):
@@ -655,13 +657,12 @@ def main():
                 run_function_parts(func_parts, batches_conf, params)
 
         if warnings:
-            if warning_first_pass:
-                for i, param_list in enumerate(warnings):
-                    compile_warning(i, param_list, ns.dump_warnings)
-                warning_first_pass = False
-            if not warning_errors:
-                for id in warning_ids:
-                    run_function(buildouts, bldt, env, 'message', '%s %s' % (id, warning_file))
+            for i, param_list in enumerate(warnings):
+                params = compile_warning(i, param_list)
+                if params:
+                    run_function(buildouts, bldt, env, 'message', params)
+                else :
+                    error("probleme with parameter : " + param_list)
 
         if ns.patchindexing:
             unpatch_indexing(buildouts[bldt]['path'])
