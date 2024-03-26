@@ -97,6 +97,7 @@ Tips & examples
 ---------------
 
 * -p ``'^(?!name)'`` : match instances not starting with name
+* -p ``'^(?:(?!name).)*$'`` : match instances not containing name
 * -p ``.*_ged_20_1`` : match instances ending with _ged_20_1
 * -f step ``imio.dms.mail:default`` ``actions`` : run import step for profile profile-imio.dms.mail:default actions
 * -w '``id="maintenance-soon" text="A maintenance operation will be done at 4pm." activate=True``'
