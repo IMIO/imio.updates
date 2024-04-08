@@ -1,3 +1,4 @@
 setuptools>=41.0.1
-imio.pyutils>=0.25
+# -e git+https://github.com/imio/imio.pyutils#egg=imio.pyutils
+imio.pyutils==1.0.1
 requests

@@ -35,7 +35,7 @@ setup(name='imio.updates',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'imio.pyutils >= 0.9',
+          'imio.pyutils >= 1.0.1',
           'ipdb',
       ],
       dependency_links=[

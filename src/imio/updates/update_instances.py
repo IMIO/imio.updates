@@ -6,6 +6,8 @@ from email.mime.text import MIMEText
 from imio.pyutils.system import dump_var
 from imio.pyutils.system import error
 from imio.pyutils.system import get_git_tag
+from imio.pyutils.system import load_var
+from imio.pyutils.system import read_dir_filter
 from imio.pyutils.system import read_file
 from imio.pyutils.system import runCommand
 from imio.pyutils.system import verbose
@@ -216,6 +218,25 @@ def get_instance_port(path, inst='instance1'):
     return search_in_port_cfg(path, proc_http_name, is_int=True)
 
 
+def get_instance_home(buildout_path):
+    return os.path.join(buildout_path, 'parts', instance)
+
+
+def get_batch_config(ih_dir=None):
+    """Get latest batching config file"""
+    if ih_dir is None:
+        ih_dir = os.getenv('INSTANCE_HOME', '.')
+    files = read_dir_filter(ih_dir, with_path=True, patterns=[r'.*_config\.txt$'])
+    if not files:
+        return None
+    latest_file = max(files, key=os.path.getmtime)
+    if latest_file:
+        config = {}
+        load_var(latest_file, config)
+        return config
+    return None
+
+
 def run_spv(bldt, path, plone_path, command, processes):
     for proc in processes:
         if dev_mode:
@@ -341,13 +362,40 @@ def run_function_parts(func_parts, batches_conf, params):
         env = params['env']
         for part in func_parts:
             params['env'] = 'FUNC_PART={} '.format(part) + env
+            first = 1
             last = 2  # so range(1, 2) return [1]
-            if part in batches_conf:
-                last = 1 + batches_conf[part] / batches_conf['batch']  # int part
-                if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
-                    last += 1
-                params['env'] += ' BATCH={}'.format(batches_conf['batch'])
-            for batch in range(1, last):
+            if batches_conf:
+                first = 2
+                # BATCH_TOTALS use
+                if part in batches_conf:
+                    params['env'] += ' BATCH={}'.format(batches_conf['batch'])
+                    last = 1 + batches_conf[part] / batches_conf['batch']  # int part
+                    if batches_conf[part] % batches_conf['batch']:  # modulo if p > b or p < b
+                        last += 1
+                # BATCHING use
+                if part in batches_conf['batching']:
+                    params['env'] += ' BATCH={}'.format(batches_conf['batch'])
+                # made a first run to set batching dict
+                ret = run_function(run_nb=1, **params)
+                if ret != 0:
+                    error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
+                    break
+                # BATCHING use
+                if part in batches_conf['batching']:
+                    # get batching dict
+                    if doit:
+                        homedir = get_instance_home(params['buildouts'][params['bldt']]['path'])
+                        batch_config = get_batch_config(homedir)
+                        if batch_config is None:
+                            error("Cannot get batching config file in '{}'".format(homedir))
+                            error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
+                            break
+                        # modify last, following batching
+                        yet_to_reat = batch_config['ll'] - batch_config['kc']
+                        last = 2 + yet_to_reat / batch_config['bn']  # int part
+                        if yet_to_reat % batch_config['bn']:  # modulo if p > b or p < b
+                            last += 1
+            for batch in range(first, last):
                 if ' BATCH=' in params['env'] and batch == (last-1):
                     params['env'] += ' BATCH_LAST=1'
                 ret = run_function(run_nb=(last > 2 and batch or 0), **params)
@@ -358,6 +406,9 @@ def run_function_parts(func_parts, batches_conf, params):
             # only here when doing a break
             error("Loop on FUNC_PARTS '{}' is broken at part '{}'".format(''.join(func_parts), part))
             break
+        else:
+            pass
+        return
     else:
         run_function(**params)
 
@@ -494,7 +545,8 @@ def main():
                         help='To not dump warnings. Use dump file already there!')
     parser.add_argument('-v', '--vars', dest='vars', action='append', default=[],
                         help="Define env variables like XX=YY, used as: env XX=YY make (or function). (can use "
-                             "multiple times -v). FUNC_PARTS and BATCH_TOTALS are special var (see readme examples).")
+                             "multiple times -v). FUNC_PARTS, BATCH_TOTALS and BATCHING are special var "
+                             "(see readme examples).")
     parser.add_argument('-c', '--custom', nargs='+', action='append', dest='custom', help="Run a custom script")
     parser.add_argument('-t', '--traces', action='store_true', dest='traces', help="Add more traces")
     parser.add_argument('-y', '--patchindexing', action='store_true', dest='patchindexing',
@@ -545,6 +597,10 @@ def main():
             func_parts = [ltr for ltr in var.split('=')[1]]
         elif var.startswith('BATCH_TOTALS='):
             batch_totals = var.split('=')[1].split(',')
+        elif var.startswith('BATCHING='):
+            parts = [ltr for ltr in var.split('=')[1] if ltr.isalpha()]
+            if parts:
+                batches_conf['batching'] = parts
         elif var.startswith('BATCH='):
             batches_conf['batch'] = int(var.split('=')[1])
         else:
@@ -556,10 +612,13 @@ def main():
                 error("BATCH_TOTALS content check: '{}' not matched !".format(val))
                 sys.exit(1)
             batches_conf[matched.group(1)] = int(matched.group(2))
-        if 'batch' not in batches_conf:
-            batches_conf['batch'] = 10000
-    elif 'batch' in batches_conf:
-        error('BATCH parameter used without BATCH_TOTALS parameter !')
+    if 'batch' in batches_conf and len(batches_conf) == 1:
+        error('BATCH parameter used without BATCH_TOTALS or BATCHING parameter !')
+        sys.exit(1)
+    if batches_conf and 'batch' not in batches_conf:
+        batches_conf['batch'] = 5000
+    if 'batching' in batches_conf and len(batches_conf) > 2:
+        error('BATCH_TOTALS and BATCHING cannot be used at the same time !')
         sys.exit(1)
     env = ' '.join(envs)
 
