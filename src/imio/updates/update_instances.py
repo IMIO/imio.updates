@@ -391,7 +391,7 @@ def run_function_parts(func_parts, batches_conf, params):
                     if batches_conf[part] % batches_conf["batch"]:  # modulo if p > b or p < b
                         last += 1
                 # BATCHING use
-                if part in batches_conf["batching"]:
+                if part in batches_conf.get("batching", ""):
                     params["env"] += " BATCH={}".format(batches_conf["batch"])
                 # made a first run to set batching dict
                 ret = run_function(run_nb=1, **params)
@@ -403,7 +403,7 @@ def run_function_parts(func_parts, batches_conf, params):
                     )
                     break
                 # BATCHING use
-                if part in batches_conf["batching"]:
+                if part in batches_conf.get("batching", ""):
                     # get batching dict
                     if doit:
                         homedir = get_instance_home(params["buildouts"][params["bldt"]]["path"])
