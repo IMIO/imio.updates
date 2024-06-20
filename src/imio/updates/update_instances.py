@@ -30,6 +30,8 @@ import time
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
 dev_mode = False
+dev_buildout = "TAGS/dmsmail3.0"
+# dev_buildout = "dmsmail"
 
 doit = False
 pattern = ""
@@ -70,9 +72,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep RUNNING | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     if dev_mode:
-        # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-        out = ["TAGS/dmsmail3.0-zeoserver\n", "TAGS/dmsmail3.0-instance1\n"]
-        # out = ['dmsmail_solr-instance1\n']
+        out = ["{}-zeoserver\n".format(dev_buildout), "{}-instance1\n".format(dev_buildout)]
     buildouts = {}
     # getting buildout and started programs
     for name in out:
@@ -91,7 +91,7 @@ def get_running_buildouts():
     cmd = 'supervisorctl status | grep "\\-zeoserver" | grep STOPPED | cut -f 1 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     if dev_mode:
-        out = ["TAGS/dmsmail3.0-zeoserver\n"]
+        out = ["{}-zeoserver\n".format(dev_buildout)]
     for name in out:
         name = name.strip("\n")
         bldt = name[:-10]
@@ -116,9 +116,7 @@ def get_supervised_buildouts():
     cmd = 'supervisorctl status | grep -v STOPPED| tr -s " " |cut -f 1,2 -d " " | sort -r'
     (out, err, code) = runCommand(cmd)
     if dev_mode:
-        # out = ['dmsmail-zeoserver\n', 'dmsmail-instance1\n', 'project-zeoserver\n', 'project-instance1\n']
-        out = ["TAGS/dmsmail3.0-zeoserver RUNNING\n", "TAGS/dmsmail3.0-instance1 RUNNING\n"]
-        # out = ['dmsmail_solr-instance1 RUNNING\n']
+        out = ["{}-zeoserver RUNNING\n".format(dev_buildout), "{}-instance1 RUNNING\n".format(dev_buildout)]
     buildouts = {}
     # getting buildout and started programs
     for line in out:
