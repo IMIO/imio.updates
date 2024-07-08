@@ -33,13 +33,13 @@ def run_step():
     if not profile.startswith("profile-"):
         profile = "profile-%s" % profile
     # obj is plone site
-    obj = obj  # noqa
+    portal = obj  # noqa
     if step == "_all_":
-        verbose('Running all "%s" steps on %s' % (profile, obj.absolute_url_path()))
-        ret = obj.portal_setup.runAllImportStepsFromProfile(profile)
+        verbose('Running all "%s" steps on %s' % (profile, portal.absolute_url_path()))
+        ret = portal.portal_setup.runAllImportStepsFromProfile(profile)
     else:
-        verbose('Running "%s#%s" step on %s' % (profile, step, obj.absolute_url_path()))
-        ret = obj.portal_setup.runImportStepFromProfile(profile, step, run_dependencies=False)
+        verbose('Running "%s#%s" step on %s' % (profile, step, portal.absolute_url_path()))
+        ret = portal.portal_setup.runImportStepFromProfile(profile, step, run_dependencies=False)
 
     if "messages" in ret:
         for step in ret["messages"]:
@@ -57,13 +57,13 @@ def run_upgrade():
     from imio.migrator.migrator import Migrator
 
     # obj is plone site
-    obj = obj  # noqa
-    mig = Migrator(obj)
+    portal = obj  # noqa
+    mig = Migrator(portal)
     if profile == "_all_":
-        verbose("Running all upgrades on %s" % (obj.absolute_url_path()))
+        verbose("Running all upgrades on %s" % (portal.absolute_url_path()))
         mig.upgradeAll()
     else:
-        verbose('Running "%s" upgrade on %s' % (profile, obj.absolute_url_path()))
+        verbose('Running "%s" upgrade on %s' % (profile, portal.absolute_url_path()))
         mig.upgradeProfile(profile, olds=(len(sys.argv) >= 5 and sys.argv[5:] or []))
     transaction.commit()
 
