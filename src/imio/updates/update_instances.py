@@ -418,9 +418,9 @@ def run_function_parts(func_parts, batches_conf, params):
                             )
                             break
                         # modify last, following batching
-                        yet_to_reat = batch_config["ll"] - batch_config["kc"]
-                        last = 2 + yet_to_reat // batch_config["bn"]  # int part
-                        if yet_to_reat % batch_config["bn"]:  # modulo if p > b or p < b
+                        yet_to_treat = batch_config["ll"] - batch_config["kc"]
+                        last = 2 + yet_to_treat // batch_config["bn"]  # int part
+                        if yet_to_treat % batch_config["bn"]:  # modulo if p > b or p < b
                             last += 1
             for batch in range(first, last):
                 if " BATCH=" in params["env"] and batch == (last - 1):
