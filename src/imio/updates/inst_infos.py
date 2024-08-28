@@ -16,6 +16,7 @@ from Products.CPUtils.Extensions.utils import tobytes
 import json
 import os
 import sys
+from six.moves import range
 
 
 types_to_count = {
@@ -68,7 +69,7 @@ portal = obj  # noqa F821
 
 # get first parameter
 tool = sys.argv[-1]
-if tool not in types_to_count.keys():
+if tool not in list(types_to_count.keys()):
     tool = ''
 
 # get types count

@@ -11,8 +11,8 @@ This package contains:
 Usage
 #####
 
-Script
-------
+Main script
+-----------
 bin/update_instances or bin/instances_update.sh
 
 To display more information, use "-h" or "--help" parameter
@@ -93,6 +93,12 @@ Helper methods
 * setup_logger: with "bin/instance run", level is 30 (warn). Useful to set it to 20 (info) or 10 (debug)
 * setup_app: get admin user, set request
 
+inst_infos.py script
+--------------------
+
+This script is run by instance (as run script) to get various information.
+It is compatible py2 / py3.
+
 Tips & examples
 ---------------
 
@@ -120,7 +126,7 @@ To deploy this package
 * cd imio.updates
 * make setup
 
-Previously:
+From the past... :
 
 * virtualenv -p python2 . (if packages python2 and virtualenv are installed)
 * (or virtualenv-2.7 . (if python2 manually compiled))
