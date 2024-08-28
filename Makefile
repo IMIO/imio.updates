@@ -10,6 +10,11 @@ setup:
 	./bin/pip install -r requirements.txt -e .
 	./bin/update_instances
 
+.PHONY: tests
+tests:  ## Runs tests
+	# can be run by example with: make tests opt='-k "test_copy"'
+	bin/python src/imio/updates/tests/tests.py ${opt}
+
 .PHONY: cleanall
 cleanall:
 	rm -fr bin include lib local share

@@ -13,6 +13,7 @@ from imio.pyutils.system import read_file
 from imio.pyutils.system import runCommand
 from imio.pyutils.system import verbose
 from imio.pyutils.utils import append
+from six.moves import range
 
 import argparse
 import os
@@ -23,7 +24,6 @@ import smtplib
 import socket
 import sys
 import time
-from six.moves import range
 
 
 # import sys
@@ -372,7 +372,8 @@ def run_function_parts(func_parts, batches_conf, params):
     """Run function multiple time if needed.
 
     :param func_parts: letters list where one letter is the part name
-    :param batches_conf: batching dict {'batch': 1000, 'A': 5000, 'B': 8000, ...} with part totals
+    :param batches_conf: batching dict {'batch': 1000, 'A': 5000, 'B': 8000, ...} when BATCH_TOTALS or
+                                       {'batch': 1000, 'batching': ['A', 'B']} when BATCHING
     :param params: dict {'buildouts': dict, 'bldt': bldt, 'env': env, 'script': '', 'fct': '', 'params': '', ...}
     """
     if func_parts:
@@ -386,7 +387,7 @@ def run_function_parts(func_parts, batches_conf, params):
                 # BATCH_TOTALS use
                 if part in batches_conf:
                     params["env"] += " BATCH={}".format(batches_conf["batch"])
-                    last = 1 + batches_conf[part] / batches_conf["batch"]  # int part
+                    last = 1 + batches_conf[part] // batches_conf["batch"]  # int part
                     if batches_conf[part] % batches_conf["batch"]:  # modulo if p > b or p < b
                         last += 1
                 # BATCHING use
@@ -418,7 +419,7 @@ def run_function_parts(func_parts, batches_conf, params):
                             break
                         # modify last, following batching
                         yet_to_reat = batch_config["ll"] - batch_config["kc"]
-                        last = 2 + yet_to_reat / batch_config["bn"]  # int part
+                        last = 2 + yet_to_reat // batch_config["bn"]  # int part
                         if yet_to_reat % batch_config["bn"]:  # modulo if p > b or p < b
                             last += 1
             for batch in range(first, last):

@@ -37,7 +37,7 @@ def loop_process(loop_len):
         if batch_handle_key(key, batch_keys, config):
             break
     else:
-        batch_loop_else(config['lc'] > 1 and key or None, batch_keys, config)
+        batch_loop_else(batch_keys, config)
     if config['bl']:
         batch_delete_files(batch_keys, config, rename=False)
 
