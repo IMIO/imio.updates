@@ -143,8 +143,8 @@ def get_supervised_buildouts():
     return buildouts
 
 
-def patch_debug(path):
-    idp = os.path.join(path, "parts/instance-debug/bin/interpreter")
+def patch_instance(path):
+    idp = os.path.join(path, "parts/{}/bin/interpreter".format(instance))
     if not os.path.exists(idp):
         error(append(messages, "'{}' doesn't exist: cannot patch it".format(idp)))
         return False
@@ -645,10 +645,10 @@ def main():
     )
     parser.add_argument(
         "-z",
-        "--patchdebug",
+        "--patchinstance",
         action="store_true",
-        dest="patchdebug",
-        help="To hack instance-debug. (Needed for Project)",
+        dest="patchinstance",
+        help="To hack instance. (Needed when home page is private)",
     )
     parser.add_argument(
         "-W",
@@ -811,8 +811,8 @@ def main():
             if not instance:
                 continue
 
-        if ns.patchdebug:
-            if not patch_debug(buildouts[bldt]["path"]):
+        if ns.patchinstance:
+            if not patch_instance(buildouts[bldt]["path"]):
                 continue
 
         if ns.patchindexing:
