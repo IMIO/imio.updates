@@ -422,8 +422,8 @@ def run_function_parts(func_parts, batches_conf, params):
                         last = 2 + yet_to_treat // batch_config["bn"]  # int part
                         if yet_to_treat % batch_config["bn"]:  # modulo if p > b or p < b
                             last += 1
-                        if last == 2:
-                            batch_delete_files({}, batch_config)
+                        # if last == 2:
+                        #     batch_delete_files({}, batch_config)
             for batch in range(first, last):
                 if " BATCH=" in params["env"] and batch == (last - 1):
                     params["env"] += " BATCH_LAST=1"
