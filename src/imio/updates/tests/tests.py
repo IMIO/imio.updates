@@ -76,6 +76,7 @@ class TestUpdateInstances(unittest.TestCase):
         # batch_config is the result after the first run
         reset(call_res, params)
         params["env"] = "SPACEX=GREAT"
+        batch_config.update({"pf": "", "cf": ""})
         batch_config.update({"ll": 5, "kc": 5, "bn": 10})
         run_function_parts("a", {"batch": 10, "batching": ["a"]}, params)
         self.assertEqual(len(call_res), 1)
