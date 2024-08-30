@@ -15,12 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python: 3.10.14
+          - python: 3.10.13
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Set up pyenv and Python
-        uses: "gabrielfalcao/pyenv-action@v14"
+        uses: "gabrielfalcao/pyenv-action@v17"
         with:
           default: "${{ matrix.python }}"
       - name: Setup Env
