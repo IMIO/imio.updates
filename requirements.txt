@@ -1,5 +1,5 @@
 setuptools>=41.0.1
-# -e git+https://github.com/imio/imio.pyutils#egg=imio.pyutils
-imio.pyutils==1.0.4
+-e git+https://github.com/imio/imio.pyutils#egg=imio.pyutils
+#imio.pyutils==1.0.4
 pdbpp==0.10.3
 requests
