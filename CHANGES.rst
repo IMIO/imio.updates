@@ -20,7 +20,7 @@ Changelog
   [sgeulette]
 - Added some tests in py3
   [sgeulette]
-- Added IS_IU env var when doing first call with BATCHING
+- Added IU_RUN1 env var when doing first call
   [sgeulette]
 
 0.2 (2022-02-12)

@@ -35,23 +35,24 @@ class TestUpdateInstances(unittest.TestCase):
         # BATCH TOTALS
         # ll < bn
         reset(call_res, params)
+        params["env"] = "SPACEX=GREAT"
         run_function_parts("a", {"batch": 10, "a": 5}, params)
         self.assertEqual(len(call_res), 1)
         self.assertEqual(call_res[0]["run_nb"], 1)
-        self.assertEqual(call_res[0]["env"], "FUNC_PART=a  BATCH=10")
+        self.assertEqual(call_res[0]["env"], "SPACEX=GREAT FUNC_PART=a BATCH=10 IU_RUN1=1")
         # ll = bn
         reset(call_res, params)
         run_function_parts("a", {"batch": 10, "a": 10}, params)
         self.assertEqual(len(call_res), 1)
         self.assertEqual(call_res[0]["run_nb"], 1)
-        self.assertEqual(call_res[0]["env"], "FUNC_PART=a  BATCH=10")
+        self.assertEqual(call_res[0]["env"], "FUNC_PART=a BATCH=10 IU_RUN1=1")
         # ll > bn and exact multiple
         reset(call_res, params)
         run_function_parts("a", {"batch": 10, "a": 20}, params)
         self.assertEqual(len(call_res), 2)
         self.assertListEqual([dic["run_nb"] for dic in call_res], [1, 2])
         self.assertListEqual(
-            [dic["env"] for dic in call_res], ["FUNC_PART=a  BATCH=10", "FUNC_PART=a  BATCH=10 BATCH_LAST=1"]
+            [dic["env"] for dic in call_res], ["FUNC_PART=a BATCH=10 IU_RUN1=1", "FUNC_PART=a BATCH=10 BATCH_LAST=1"]
         )
         # ll > bn and not multiple
         reset(call_res, params)
@@ -60,7 +61,7 @@ class TestUpdateInstances(unittest.TestCase):
         self.assertListEqual([dic["run_nb"] for dic in call_res], [1, 2, 3])
         self.assertListEqual(
             [dic["env"] for dic in call_res],
-            ["FUNC_PART=a  BATCH=10", "FUNC_PART=a  BATCH=10", "FUNC_PART=a  BATCH=10 BATCH_LAST=1"],
+            ["FUNC_PART=a BATCH=10 IU_RUN1=1", "FUNC_PART=a BATCH=10", "FUNC_PART=a BATCH=10 BATCH_LAST=1"],
         )
 
         def mock_get_batch_config_se(var):
@@ -74,18 +75,19 @@ class TestUpdateInstances(unittest.TestCase):
         # ll < bn
         # batch_config is the result after the first run
         reset(call_res, params)
+        params["env"] = "SPACEX=GREAT"
         batch_config.update({"ll": 5, "kc": 5, "bn": 10})
         run_function_parts("a", {"batch": 10, "batching": ["a"]}, params)
         self.assertEqual(len(call_res), 1)
         self.assertEqual(call_res[0]["run_nb"], 1)
-        self.assertEqual(call_res[0]["env"], "FUNC_PART=a  BATCH=10")
+        self.assertEqual(call_res[0]["env"], "SPACEX=GREAT FUNC_PART=a BATCH=10 IU_RUN1=1")
         # ll = bn
         reset(call_res, params)
         batch_config.update({"ll": 10, "kc": 10, "bn": 10})
         run_function_parts("a", {"batch": 10, "batching": ["a"]}, params)
         self.assertEqual(len(call_res), 1)
         self.assertEqual(call_res[0]["run_nb"], 1)
-        self.assertEqual(call_res[0]["env"], "FUNC_PART=a  BATCH=10")
+        self.assertEqual(call_res[0]["env"], "FUNC_PART=a BATCH=10 IU_RUN1=1")
         # ll > bn and exact multiple
         reset(call_res, params)
         batch_config.update({"ll": 20, "kc": 10, "bn": 10})
@@ -93,7 +95,8 @@ class TestUpdateInstances(unittest.TestCase):
         self.assertEqual(len(call_res), 2)
         self.assertListEqual([dic["run_nb"] for dic in call_res], [1, 2])
         self.assertListEqual(
-            [dic["env"] for dic in call_res], ["FUNC_PART=a  BATCH=10", "FUNC_PART=a  BATCH=10 BATCH_LAST=1"]
+            [dic["env"] for dic in call_res],
+            ["FUNC_PART=a BATCH=10 IU_RUN1=1", "FUNC_PART=a BATCH=10 BATCH_LAST=1"],
         )
         # ll > bn and not multiple
         reset(call_res, params)
@@ -103,7 +106,11 @@ class TestUpdateInstances(unittest.TestCase):
         self.assertListEqual([dic["run_nb"] for dic in call_res], [1, 2, 3])
         self.assertListEqual(
             [dic["env"] for dic in call_res],
-            ["FUNC_PART=a  BATCH=10", "FUNC_PART=a  BATCH=10", "FUNC_PART=a  BATCH=10 BATCH_LAST=1"],
+            [
+                "FUNC_PART=a BATCH=10 IU_RUN1=1",
+                "FUNC_PART=a BATCH=10",
+                "FUNC_PART=a BATCH=10 BATCH_LAST=1",
+            ],
         )
 
 

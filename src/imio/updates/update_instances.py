@@ -377,9 +377,9 @@ def run_function_parts(func_parts, batches_conf, params):
     :param params: dict {'buildouts': dict, 'bldt': bldt, 'env': env, 'script': '', 'fct': '', 'params': '', ...}
     """
     if func_parts:
-        env = params["env"]
         for part in func_parts:
-            params["env"] = "FUNC_PART={} ".format(part) + env
+            env = params["env"] and "{} ".format(params["env"]) or ""
+            params["env"] = "{}FUNC_PART={}".format(env, part)
             first = 1
             last = 2  # so range(1, 2) return [1]
             if batches_conf:
@@ -392,8 +392,10 @@ def run_function_parts(func_parts, batches_conf, params):
                         last += 1
                 # BATCHING use
                 if part in batches_conf.get("batching", ""):
-                    params["env"] += " BATCH={} IS_IU=1".format(batches_conf["batch"])
+                    params["env"] += " BATCH={}".format(batches_conf["batch"])
                 # made a first run to set batching dict
+                saved_env = params["env"]
+                params["env"] += " IU_RUN1=1"
                 ret = run_function(run_nb=1, **params)
                 if ret != 0:
                     error(
@@ -402,6 +404,7 @@ def run_function_parts(func_parts, batches_conf, params):
                         )
                     )
                     break
+                params["env"] = saved_env
                 # BATCHING use
                 if part in batches_conf.get("batching", ""):
                     # get batching dict
