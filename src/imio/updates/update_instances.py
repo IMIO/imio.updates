@@ -133,7 +133,8 @@ def get_supervised_buildouts():
     # escape if pattern not matched
     # order started following defined list
     escaped = []
-    for bldt in buildouts.keys():
+    buildouts_keys = list(buildouts.keys())
+    for bldt in buildouts_keys:
         if pattern and not re.match(pattern, bldt, re.I):
             del buildouts[bldt]
             escaped.append(bldt)
