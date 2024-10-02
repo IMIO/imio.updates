@@ -112,6 +112,8 @@ Tips & examples
   Can be used to split migration in multiple runs.
 * -v FUNC_PARTS=abc -v BATCH_TOTALS=b:2100,c:2000 -v BATCH=1000 : calls the specified parts in batch following totals.
   Sub calls as ENV FUNC_PART=a (one time), ENV FUNC_PART=b (3 times), ENV FUNC_PART=C (2 times)
+* -v FUNC_PARTS=abc -v BATCHING=bc -v BATCH=1000 : calls the specified parts with automatic batching.
+  Sub calls as ENV FUNC_PART=a (one time), ENV FUNC_PART=b (x times), ENV FUNC_PART=C (y times)
 
 Multiple options:
 
