@@ -31,7 +31,7 @@ import time
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
-dev_mode = 0
+dev_mode = 2
 dev_config = {1: {"bldt": "TAGS/dmsmail3.0"}, 2: {"bldt": "dmsmail"}}
 dev_buildout = dev_config.get(dev_mode, {}).get("bldt")
 
@@ -379,8 +379,9 @@ def run_function_parts(func_parts, batches_conf, params):
     :param params: dict {'buildouts': dict, 'bldt': bldt, 'env': env, 'script': '', 'fct': '', 'params': '', ...}
     """
     if func_parts:
+        original_env = params["env"]
         for part in func_parts:
-            env = params["env"] and "{} ".format(params["env"]) or ""
+            env = original_env and "{} ".format(original_env) or ""
             params["env"] = "{}FUNC_PART={}".format(env, part)
             first = 1
             last = 2  # so range(1, 2) return [1]
