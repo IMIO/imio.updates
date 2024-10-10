@@ -31,7 +31,7 @@ import time
 # sys.path[0:0] = [
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
-dev_mode = 2
+dev_mode = 0
 dev_config = {1: {"bldt": "TAGS/dmsmail3.0"}, 2: {"bldt": "dmsmail"}}
 dev_buildout = dev_config.get(dev_mode, {}).get("bldt")
 
