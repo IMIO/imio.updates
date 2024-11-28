@@ -239,14 +239,17 @@ def get_instance_home(buildout_path):
     return os.path.join(buildout_path, "parts", instance)
 
 
-def get_batch_config(ih_dir=None):
+def get_batch_config(dirs=()):
     """Get latest batching config file"""
-    if ih_dir is None:
-        ih_dir = os.getenv("INSTANCE_HOME", ".")
-    files = read_dir_filter(ih_dir, with_path=True, patterns=[r".*_config\.txt$"])
-    if not files:
+
+    dirs.extend([os.getenv("INSTANCE_HOME", ".")])
+    all_files = []
+    for adir in dirs:
+        files = read_dir_filter(adir, with_path=True, patterns=[r".*_config\.txt$"])
+        all_files.extend(files)
+    if not all_files:
         return None
-    latest_file = max(files, key=os.path.getmtime)
+    latest_file = max(all_files, key=os.path.getmtime)
     if latest_file:
         config = {}
         load_var(latest_file, config)
@@ -412,10 +415,10 @@ def run_function_parts(func_parts, batches_conf, params):
                 if part in batches_conf.get("batching", ""):
                     # get batching dict
                     if doit:
-                        homedir = get_instance_home(params["buildouts"][params["bldt"]]["path"])
-                        batch_config = get_batch_config(homedir)
+                        bldtdir = params["buildouts"][params["bldt"]]["path"]
+                        batch_config = get_batch_config([bldtdir, get_instance_home(bldtdir)])
                         if batch_config is None:
-                            error(append(messages, "Cannot get batching config file in '{}'".format(homedir)))
+                            error(append(messages, "Cannot get batching config file in '{}'".format(bldtdir)))
                             error(
                                 append(
                                     messages,
