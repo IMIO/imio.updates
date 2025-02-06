@@ -3,10 +3,17 @@
 
 .PHONY: setup
 setup:
-	if command -v virtualenv-2.7; then virtualenv-2.7 . ; elif command -v python2 >/dev/null && command -v virtualenv; then virtualenv -p python2 . ; fi
+	virtualenv .
+# 	@if [ "`./bin/python --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1`" -ne "3" ]; then \
+# 	    echo "Error: Python 3 is required. Current version is `./bin/python --version`."; exit 1; fi
 	./bin/pip install --upgrade pip
 	./bin/pip install -r requirements.txt -e .
 	./bin/update_instances
+
+.PHONY: tests
+tests:  ## Runs tests
+	# can be run by example with: make tests opt='-k "test_copy"'
+	bin/python src/imio/updates/tests/tests.py ${opt}
 
 .PHONY: cleanall
 cleanall:

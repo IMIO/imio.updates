@@ -12,10 +12,13 @@ from imio.pyutils.system import runCommand
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import tobytes
+from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
+from zope.component import queryUtility
 
 import json
 import os
 import sys
+from six.moves import range
 
 
 types_to_count = {
@@ -68,7 +71,7 @@ portal = obj  # noqa F821
 
 # get first parameter
 tool = sys.argv[-1]
-if tool not in types_to_count.keys():
+if tool not in list(types_to_count.keys()):
     tool = ''
 
 # get types count
@@ -128,6 +131,12 @@ if tool == 'dms':
     # get assigned_user option
     infos['checks']['assigned_user'] = api.portal.get_registry_record('imio.dms.mail.browser.settings.'
                                                                       'IImioDmsMailConfig.assigned_user_check')
+    # get cron4plone settings
+    cron_configlet = queryUtility(ICronConfiguration, "cron4plone_config")
+    if not cron_configlet.cronjobs:
+        infos['checks']['cron'] = 0
+    else:
+        infos['checks']['cron'] = 1
     # get wsclient option
     infos['checks']['pm'] = check_wsclient()
     # get query next prev max result value

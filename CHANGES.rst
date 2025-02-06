@@ -10,6 +10,18 @@ Changelog
   [aduchene]
 - Can call multiple times a function with FUNC_PARTS variable and by batch with BATCH_TOTALS AND BATCH values
   [sgeulette]
+- Stopped really when error in a function loop
+  [sgeulette]
+- Various improveents in inst_infos
+  [sgeulette]
+- Handled FATAL and EXITED supervisor status
+  [sgeulette]
+- Improved batching with automatic BATCHING handling
+  [sgeulette]
+- Added some tests in py3
+  [sgeulette]
+- Added IU_RUN1 env var when doing first call
+  [sgeulette]
 
 0.2 (2022-02-12)
 ----------------
