@@ -151,6 +151,12 @@ if tool == 'dms':
     dvcj = api.portal.get_registry_record('imio.dms.mail.dv_clean_days')
     dvcd = api.portal.get_registry_record('imio.dms.mail.dv_clean_date')
     infos['checks']['zdvc'] = dvcj or (dvcd and dvcd.strftime('%Y-%m-%d')) or u''
+    # get emails ?
+    infos["checks"]["emails"] = 0
+    for brain in catalog.unrestrictedSearchResults(portal_type="dmsoutgoingmail"):
+        obj = brain._unrestrictedGetObject()
+        if obj.email_status:
+            infos["checks"]["emails"] += 1
 
 if tool == 'pst':
     from imio.project.core.content.project import IProject  # noqa
