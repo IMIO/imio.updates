@@ -26,7 +26,7 @@ types_to_count = {
     {'portal_type':
         ('dmsincomingmail', 'dmsincoming_email', 'dmsoutgoingmail', 'task', 'organization',
          'person', 'held_position', 'dmsmainfile', 'dmsommainfile', 'dmsappendixfile',
-         'ClassificationFolder', 'ClassificationSubfolder'), },
+         'ClassificationFolder', 'ClassificationSubfolder', 'annex'), },
     'pst':
     {'portal_type':
         ('projectspace', 'strategicobjective', 'operationalobjective',
