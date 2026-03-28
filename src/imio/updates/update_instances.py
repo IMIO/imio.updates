@@ -210,6 +210,7 @@ def unpatch_indexing(path):
     if not doit:
         verbose("=> Will be unpatched: '{}'".format(cip))
     else:
+        verbose("=> Unpatching: '{}'".format(cip))
         shutil.copy2(cipbck, cip)
 
 

@@ -99,6 +99,7 @@ def message():
     if delete:
         if id in config:
             api.content.delete(config[id])
+            verbose("Deleted message with id %s" % id)
             transaction.commit()
         return
     elif id in config:

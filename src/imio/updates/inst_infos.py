@@ -141,6 +141,12 @@ if tool == 'dms':
     infos['checks']['pm'] = check_wsclient()
     # get query next prev max result value
     infos['checks']['qnp'] = int(api.portal.get_registry_record('collective.querynextprev.maxresults') or 0)
+    # get internal number types
+    infos["checks"]["inb"] = ""
+    inb_config = api.portal.get_registry_record("collective.behavior.internalnumber.browser.settings."
+                                                "IInternalNumberConfig.portal_type_config", default=None)
+    if inb_config:
+        infos["checks"]["inb"] = u", ".join([dic["portal_type"] for dic in inb_config])
     # temporary
     # types = api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.omail_types') or []
     # TODO in dms 3.0 mt_title => dtitle
