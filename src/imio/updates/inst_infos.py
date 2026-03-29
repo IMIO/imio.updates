@@ -146,7 +146,7 @@ if tool == 'dms':
     inb_config = api.portal.get_registry_record("collective.behavior.internalnumber.browser.settings."
                                                 "IInternalNumberConfig.portal_type_config", default=None)
     if inb_config:
-        infos["checks"]["inb"] = u", ".join([dic["portal_type"] for dic in inb_config])
+        infos["checks"]["inb"] = u", ".join([dc["portal_type"] for dc in inb_config])
     # temporary
     # types = api.portal.get_registry_record('imio.dms.mail.browser.settings.IImioDmsMailConfig.omail_types') or []
     # TODO in dms 3.0 mt_title => dtitle

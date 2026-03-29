@@ -433,7 +433,7 @@ def run_function_parts(func_parts, batches_conf, params):
                         if yet_to_treat % batch_config["bn"]:  # modulo if p > b or p < b
                             last += 1
                         if last == 2:  # only one run, already done
-                            batch_delete_files({}, batch_config)
+                            batch_delete_files({}, batch_config, log=True)
             for batch in range(first, last):
                 if " BATCH=" in params["env"] and batch == (last - 1):
                     params["env"] += " BATCH_LAST=1"
