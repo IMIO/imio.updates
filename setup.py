@@ -35,13 +35,13 @@ setup(name='imio.updates',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'imio.pyutils >= 1.0.4',
+          'imio.pyutils >= 1.2.0',
           'six',
       ],
       # python_requires=">=3.10",
       dependency_links=[
 #          'git://github.com/IMIO/imio.pyutils.git#egg=imio.pyutils'
-          'https://github.com/IMIO/imio.pyutils/zipball/master#egg=imio.pyutils-1.0.4'
+          'https://github.com/IMIO/imio.pyutils/zipball/master#egg=imio.pyutils-1.2.2'
       ],
       entry_points={
           'console_scripts': [
