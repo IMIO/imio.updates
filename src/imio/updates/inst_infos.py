@@ -114,7 +114,8 @@ if tool == 'dms':
     # get applied workflow adaptations
     from collective.wfadaptations.api import get_applied_adaptations
     applied = ', '.join([d['adaptation'] for d in get_applied_adaptations()])
-    for sub, rep in (('imio.dms.mail.wfadaptations.', ''), ('ServiceValidation', 'sv'), ('ToPrint', 'tp')):
+    for sub, rep in (('imio.dms.mail.wfadaptations.', ''), ('ServiceValidation', 'sv'), ('ToPrint', 'tp'),
+                     ("ToApproveAdaptation", "ta"), ("PreManagerValidation", "pm")):
         applied = applied.replace(sub, rep)
     infos['checks']['wfadaptations'] = applied
     # get assigned_user option

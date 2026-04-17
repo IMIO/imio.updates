@@ -12,7 +12,7 @@ Changelog
   [sgeulette]
 - Stopped really when error in a function loop
   [sgeulette]
-- Various improveents in inst_infos
+- Various improvements in inst_infos
   [sgeulette]
 - Handled FATAL and EXITED supervisor status
   [sgeulette]
