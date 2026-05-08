@@ -356,21 +356,27 @@ def run_make(buildouts, bldt, env, make):
     return code
 
 
-def run_function(buildouts, bldt, env, fct, params, script=function_script, run_nb=0):
+def run_function(buildouts, bldt, env, fct, params, script=function_script, run_nb=0, run_tot=0):
     path = buildouts[bldt]["path"]
     os.chdir(path)
     cmd = env and "env {} ".format(env) or ""
     cmd += "%s/bin/%s -O%s run %s %s %s" % (path, instance, buildouts[bldt]["plone"], script, fct, params)
     code = 0
+    if run_tot == -1:
+        nb_str = ""
+    elif run_tot == 0:
+        nb_str = "{}/? ".format(run_nb)
+    else:
+        nb_str = "{}/{} ".format(run_nb, run_tot)
     if doit:
         start = datetime.now()
-        verbose(append(messages, "=> Running %s'%s'" % (run_nb and "{} ".format(run_nb) or "", cmd)))
+        verbose(append(messages, "=> Running %s'%s'" % (nb_str, cmd)))
         (out, err, code) = runCommand(cmd, outfile="%s/make.log" % path)
         if code:
             error(append(messages, "Problem running '%s' function: see %s/make.log file" % (fct, path)))
         verbose("\tDuration: %s" % (datetime.now() - start))
     else:
-        verbose("=> Will be run %s'%s'" % (run_nb and "{} ".format(run_nb) or "", cmd))
+        verbose("=> Will be run %s'%s'" % (nb_str, cmd))
     return code
 
 
@@ -389,6 +395,7 @@ def run_function_parts(func_parts, batches_conf, params):
             params["env"] = "{}FUNC_PART={}".format(env, part)
             first = 1
             last = 2  # so range(1, 2) return [1]
+            b_tot = -1
             if batches_conf:
                 first = 2
                 # BATCH_TOTALS use
@@ -397,13 +404,15 @@ def run_function_parts(func_parts, batches_conf, params):
                     last = 1 + batches_conf[part] // batches_conf["batch"]  # int part
                     if batches_conf[part] % batches_conf["batch"]:  # modulo if p > b or p < b
                         last += 1
+                    b_tot = last-1
                 # BATCHING use
                 if part in batches_conf.get("batching", ""):
                     params["env"] += " BATCH={}".format(batches_conf["batch"])
+                    b_tot = 0
                 # made a first run to set batching dict
                 saved_env = params["env"]
                 params["env"] += " IU_RUN1=1"
-                ret = run_function(run_nb=1, **params)
+                ret = run_function(run_nb=1, run_tot=b_tot, **params)
                 if ret != 0:
                     error(
                         append(
@@ -432,12 +441,13 @@ def run_function_parts(func_parts, batches_conf, params):
                         last = 2 + yet_to_treat // batch_config["bn"]  # int part
                         if yet_to_treat % batch_config["bn"]:  # modulo if p > b or p < b
                             last += 1
+                        b_tot = last-1
                         if last == 2:  # only one run, already done
                             batch_delete_files({}, batch_config, log=True)
             for batch in range(first, last):
                 if " BATCH=" in params["env"] and batch == (last - 1):
                     params["env"] += " BATCH_LAST=1"
-                ret = run_function(run_nb=(last > 2 and batch or 0), **params)
+                ret = run_function(run_nb=(last > 2 and batch or 0), run_tot=b_tot, **params)
                 if ret != 0:
                     break
             else:
