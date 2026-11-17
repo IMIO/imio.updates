@@ -4,6 +4,8 @@ Changelog
 0.3 (unreleased)
 ----------------
 
+- Added `-Y` parameter to run some FUNC_PARTS without the collective.indexing patch (`-y`)
+  [sgeulette]
 - Added stopzeo and restartzeo parameters
   [sgeulette]
 - Added a QUERY_YEAR env var to inst_info to be able to count content created for a specific year.

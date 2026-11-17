@@ -212,6 +212,7 @@ def unpatch_indexing(path):
     else:
         verbose("=> Unpatching: '{}'".format(cip))
         shutil.copy2(cipbck, cip)
+    return True
 
 
 def search_in_port_cfg(path, to_find, is_int=False):
@@ -380,10 +381,11 @@ def run_function(buildouts, bldt, env, fct, params, script=function_script, run_
     return code
 
 
-def run_function_parts(func_parts, batches_conf, params):
+def run_function_parts(func_parts, batches_conf, params, unpatch_parts=""):
     """Run function multiple time if needed.
 
     :param func_parts: letters list where one letter is the part name
+    :param unpatch_parts: part letters run without indexing patch (the others are run patched)
     :param batches_conf: batching dict {'batch': 1000, 'A': 5000, 'B': 8000, ...} when BATCH_TOTALS or
                                        {'batch': 1000, 'batching': ['A', 'B']} when BATCHING
     :param params: dict {'buildouts': dict, 'bldt': bldt, 'env': env, 'script': '', 'fct': '', 'params': '', ...}
@@ -391,6 +393,13 @@ def run_function_parts(func_parts, batches_conf, params):
     if func_parts:
         original_env = params["env"]
         for part in func_parts:
+            if unpatch_parts:
+                bldt_path = params["buildouts"][params["bldt"]]["path"]
+                indexing_func = unpatch_indexing if part in unpatch_parts else patch_indexing
+                if not indexing_func(bldt_path):
+                    error(append(messages, "Loop on FUNC_PARTS '{}' is broken at part '{}'".format(
+                        "".join(func_parts), part)))
+                    break
             env = original_env and "{} ".format(original_env) or ""
             params["env"] = "{}FUNC_PART={}".format(env, part)
             first = 1
@@ -666,6 +675,13 @@ def main():
         help="To hack collective.indexing.monkey, to keep direct indexation during operations",
     )
     parser.add_argument(
+        "-Y",
+        "--unpatchindexing-parts",
+        dest="unpatch_parts",
+        default="",
+        help="With -y, FUNC_PARTS letters to run with collective.indexing unpatched (ex: -Y y)",
+    )
+    parser.add_argument(
         "-z",
         "--patchinstance",
         action="store_true",
@@ -750,6 +766,9 @@ def main():
         error(append(messages, "BATCH_TOTALS and BATCHING cannot be used at the same time !"))
         sys.exit(1)
     env = " ".join(envs)
+    if ns.unpatch_parts and not (ns.patchindexing and func_parts):
+        error(append(messages, "-Y parameter needs -y parameter and FUNC_PARTS variable !"))
+        sys.exit(1)
 
     # buildouts = get_running_buildouts()
     buildouts = get_supervised_buildouts()
@@ -859,7 +878,7 @@ def main():
                     "fct": "".join(param_list[1:2]),
                     "params": " ".join(param_list[2:]),
                 }
-                run_function_parts(func_parts, batches_conf, params)
+                run_function_parts(func_parts, batches_conf, params, ns.unpatch_parts)
 
         if functions:
             for param_list in functions:
@@ -870,7 +889,7 @@ def main():
                     "fct": param_list[0],
                     "params": " ".join(param_list[1:]),
                 }
-                run_function_parts(func_parts, batches_conf, params)
+                run_function_parts(func_parts, batches_conf, params, ns.unpatch_parts)
 
         if warnings:
             if warning_first_pass:

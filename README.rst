@@ -81,6 +81,8 @@ List of available parameters:
 
 * -y, --patchindexing : To hack collective.indexing.monkey, to keep direct indexation during operations
 
+* -Y, --unpatchindexing-parts : With -y, FUNC_PARTS letters to run with collective.indexing unpatched (ex: -Y y)
+
 * -z, --patchdebug : Used to patch instance-debug if front-page is a dexterity type and not publically accessible
 
 * -W, --wait : Wait for instance to be up and running during a `-s restart`
