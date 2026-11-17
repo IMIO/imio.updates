@@ -6,6 +6,9 @@ Changelog
 
 - Added `-Y` parameter to run some FUNC_PARTS without the collective.indexing patch (`-y`)
   [sgeulette]
+- Unpatched collective.indexing with a reverse sed (no more .bck) and at start when `-y` isn't used
+  (cleans a run interrupted by ctrl-c or kill)
+  [sgeulette]
 - Added stopzeo and restartzeo parameters
   [sgeulette]
 - Added a QUERY_YEAR env var to inst_info to be able to count content created for a specific year.

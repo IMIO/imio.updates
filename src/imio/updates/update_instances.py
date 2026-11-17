@@ -20,7 +20,6 @@ import argparse
 import os
 import re
 import requests as requests
-import shutil
 import smtplib
 import socket
 import sys
@@ -179,40 +178,40 @@ def patch_instance(path):
     return True
 
 
-def patch_indexing(path):
-    """Avoid monkey patch to not queue indexation operations"""
-    cip = os.path.join(path, "parts/omelette/collective/indexing/monkey.py")
+INDEXING_MONKEY = "parts/omelette/collective/indexing/monkey.py"
+
+
+def indexing_patched(path):
+    """Check if collective.indexing monkey file is patched by patch_indexing"""
+    cip = os.path.join(path, INDEXING_MONKEY)
+    return os.path.exists(cip) and any(re.match(r"# +module\.indexObject = indexObject", line) for line in read_file(cip))
+
+
+def run_indexing_sed(path, action, sed_expr):
+    """Run sed on collective.indexing monkey file. Patch and unpatch are exact inverses: no backup needed."""
+    cip = os.path.join(path, INDEXING_MONKEY)
     if not os.path.exists(cip):
-        error(append(messages, "'{}' doesn't exist: cannot patch it".format(cip)))
+        error(append(messages, "'{}' doesn't exist: cannot {} it".format(cip, action)))
         return False
     if not doit:
-        verbose("=> Will be patched: '{}'".format(cip))
-    else:
-        verbose("=> Patching: '{}'".format(cip))
-        cipbck = cip + ".bck"
-        cmd = "sed -i'' '/^ \\+module.indexObject = indexObject/,+3 s/^/#/' {}".format(cip)
-        if not os.path.exists(cipbck):
-            cmd = cmd.replace("sed -i'' ", "sed -i'.bck' ")
-        (out, err, code) = runCommand(cmd)
-        if code or err:
-            error(append(messages, "Problem patching indexing: {}".format(err)))
-            return False
+        verbose("=> Will be {}ed: '{}'".format(action, cip))
+        return True
+    verbose("=> {}ing: '{}'".format(action.capitalize(), cip))
+    (out, err, code) = runCommand("sed -i '{}' {}".format(sed_expr, cip))
+    if code or err:
+        error(append(messages, "Problem {}ing indexing: {}".format(action, err)))
+        return False
     return True
+
+
+def patch_indexing(path):
+    """Avoid monkey patch to not queue indexation operations"""
+    return run_indexing_sed(path, "patch", "/^ \\+module.indexObject = indexObject/,+3 s/^/#/")
 
 
 def unpatch_indexing(path):
     """Undo patch_indexing"""
-    cip = os.path.join(path, "parts/omelette/collective/indexing/monkey.py")
-    cipbck = cip + ".bck"
-    if not os.path.exists(cipbck):
-        error(append(messages, "'{}' doesn't exist: cannot unpatch it".format(cipbck)))
-        return False
-    if not doit:
-        verbose("=> Will be unpatched: '{}'".format(cip))
-    else:
-        verbose("=> Unpatching: '{}'".format(cip))
-        shutil.copy2(cipbck, cip)
-    return True
+    return run_indexing_sed(path, "unpatch", "/^# \\+module.indexObject = indexObject/,+3 s/^#//")
 
 
 def search_in_port_cfg(path, to_find, is_int=False):
@@ -859,6 +858,8 @@ def main():
         if ns.patchindexing:
             if not patch_indexing(buildouts[bldt]["path"]):
                 continue
+        elif indexing_patched(path):  # left patched by an interrupted run
+            unpatch_indexing(path)
 
         if auth == "0" or (auth == "8" and (make or functions)):
             run_function(buildouts, bldt, "", "auth", "0")
