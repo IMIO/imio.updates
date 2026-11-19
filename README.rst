@@ -47,6 +47,9 @@ List of available parameters:
   *     startzeo : start all supervised zeo. (after buildout if `-b` was provided)
   *     restartzeo : restart the zeo instance (after buildout if `-b` was provided)
 
+* -P USER, --puppet=USER : disable puppet agent before the run (message 'maintenance work: USER')
+  and enable it at the end if no error occurred
+
 * -a, --auth : enable/disable authentication plugins
 
   * 0 : disable only

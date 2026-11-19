@@ -4,6 +4,8 @@ Changelog
 0.3 (unreleased)
 ----------------
 
+- Adde `-P user` parameter to stop/start puppet agent
+  [sgeulette]
 - Added `-s stopstart` and `-s stopstartworker` so instances are restarted at the very end
   [sgeulette]
 - Added `-Y` parameter to run some FUNC_PARTS without the collective.indexing patch (`-y`)

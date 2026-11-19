@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from imio.pyutils.batching import batch_delete_files
 from imio.pyutils.system import dump_var
-from imio.pyutils.system import error
+from imio.pyutils.system import error as print_error
 from imio.pyutils.system import get_git_tag
 from imio.pyutils.system import load_var
 from imio.pyutils.system import post_request
@@ -61,6 +61,14 @@ wait = False
 traces = False
 ns = None
 messages = []
+errors = []
+puppet_cmd = "sudo /opt/puppetlabs/puppet/bin/puppet agent"
+
+
+def error(msg):
+    """Print the error and record it: puppet is not re-enabled if errors occurred."""
+    errors.append(msg)
+    print_error(msg)
 
 
 def trace(msg):
@@ -318,6 +326,19 @@ def repair_fatals(buildouts, fatals, bldt, path, plone_path):
     if change:
         new_buildouts = get_supervised_buildouts()
         buildouts[bldt]["spv"] = new_buildouts[bldt]["spv"]
+
+
+def run_puppet(params):
+    cmd = "{} {}".format(puppet_cmd, params)
+    if not doit:
+        verbose("=> Will be run '{}'".format(cmd))
+        return True
+    verbose(append(messages, "=> Running '{}'".format(cmd)))
+    (out, err, code) = runCommand(cmd)
+    if code:
+        error(append(messages, "Problem running puppet command: {}".format(err)))
+        return False
+    return True
 
 
 def run_buildout(buildouts, bldt):
@@ -692,6 +713,14 @@ def main():
         help="To hack instance. (Needed when home page is private)",
     )
     parser.add_argument(
+        "-P",
+        "--puppet",
+        dest="puppet",
+        metavar="USER",
+        help="Disable puppet agent before the run (with message 'maintenance work by USER')"
+        " and enable it at the end if no error occurred",
+    )
+    parser.add_argument(
         "-W",
         "--wait",
         action="store_true",
@@ -775,6 +804,9 @@ def main():
     env = " ".join(envs)
     if ns.unpatch_parts and not (ns.patchindexing and func_parts):
         error(append(messages, "-Y parameter needs -y parameter and FUNC_PARTS variable !"))
+        sys.exit(1)
+
+    if ns.puppet and not run_puppet('--disable "maintenance work: {}"'.format(ns.puppet)):
         sys.exit(1)
 
     # buildouts = get_running_buildouts()
@@ -931,6 +963,12 @@ def main():
                 "start",
                 [p for p, st in buildouts[bldt]["spv"] if p.startswith("worker") and st == "RUNNING"],
             )
+
+    if ns.puppet:
+        if errors:
+            error(append(messages, "Puppet agent left disabled because errors occurred"))
+        else:
+            run_puppet("--enable")
 
     if ns.email and doit:
         email(buildouts, ns.email)
