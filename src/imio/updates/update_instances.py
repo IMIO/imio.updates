@@ -277,7 +277,7 @@ def run_spv(bldt, path, plone_path, command, processes):
             (out, err, code) = runCommand(cmd)
             if code:
                 error(append(messages, "Problem running supervisor command"))
-            elif wait:
+            elif wait and command != "stop":  # nothing to check on a stopped instance
                 threshold = 20
                 interval = 10
                 trace("Waiting %d sec ..." % threshold)
