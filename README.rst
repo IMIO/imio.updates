@@ -36,10 +36,12 @@ List of available parameters:
 * -s val, --superv=val : to run supervisor command (stop|restart|stopall|restartall
 
   * 	stop : stop the instances (not zeo)
+  * 	stopstart : stop the instances (not zeo) and start them again at the end of the buildout run
   * 	restart : restart the instances (after buildout if `-b` was provided)
   * 	stopall : stop all buildout processes
   * 	restartall : restart all processes (after buildout if `-b` was provided)
   *     stopworker : stop the worker instances
+  *     stopstartworker : stop the worker instances and start them again at the end of the buildout run
   *     restartworker : restart the worker instances (after buildout if `-b` was provided)
   *     stopzeo : stop the zeo
   *     startzeo : start all supervised zeo. (after buildout if `-b` was provided)

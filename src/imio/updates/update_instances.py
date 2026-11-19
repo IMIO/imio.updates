@@ -31,7 +31,7 @@ import time
 #     '/srv/instances/dmsmail/src/imio.pyutils',  # local
 # ]
 dev_mode = 0
-dev_config = {1: {"bldt": "TAGS/dmsmail3.0"}, 2: {"bldt": "dmsmail"}}
+dev_config = {1: {"bldt": "TAGS/dmsmail3.1"}, 2: {"bldt": "dmsmail"}}
 dev_buildout = dev_config.get(dev_mode, {}).get("bldt")
 
 doit = False
@@ -584,10 +584,12 @@ def main():
         action="append",
         choices=[
             "stop",
+            "stopstart",
             "restart",
             "stopall",
             "restartall",
             "stopworker",
+            "stopstartworker",
             "restartworker",
             "stopzeo",
             "startzeo",
@@ -596,11 +598,13 @@ def main():
         ],
         help="To run supervisor command:"
         " * stop : stop the instances (not zeo)."
+        " * stopstart : stop the instances (not zeo) and start them again at the end of the buildout run."
         " * restart : restart the instances and waits for it to be up and running (after "
         "buildout if `-b` was provided)."
         " * stopall : stop all buildout processes."
         " * restartall : restart all processes (after buildout if `-b` was provided)."
         " * stopworker : stop the worker instances."
+        " * stopstartworker : stop the worker instances and start them again at the end of the buildout run."
         " * restartworker : restart the worker instances (after buildout if `-b` was provided)."
         " * stopzeo : stop the zeo."
         " * startzeo : start all supervised zeo. (after buildout if `-b` was provided)"
@@ -708,10 +712,14 @@ def main():
     for sv in ns.superv or []:
         if sv == "stop":
             stop += "i"
+        elif sv == "stopstart":
+            stop += "is"
         elif sv == "stopall":
             stop += "a"
         elif sv == "stopworker":
             stop += "w"
+        elif sv == "stopstartworker":
+            stop += "wt"
         elif sv == "stopzeo":
             stop += "z"
         elif sv == "restart":
@@ -906,6 +914,23 @@ def main():
 
         if auth == "1" or (auth == "8" and (make or functions)):
             run_function(buildouts, bldt, "", "auth", "1")
+
+        if "s" in stop:
+            run_spv(
+                bldt,
+                path,
+                plone_path,
+                "start",
+                [p for p, st in buildouts[bldt]["spv"] if p.startswith("instance") and st == "RUNNING"],
+            )
+        if "t" in stop:
+            run_spv(
+                bldt,
+                path,
+                plone_path,
+                "start",
+                [p for p, st in buildouts[bldt]["spv"] if p.startswith("worker") and st == "RUNNING"],
+            )
 
     if ns.email and doit:
         email(buildouts, ns.email)

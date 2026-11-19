@@ -4,6 +4,8 @@ Changelog
 0.3 (unreleased)
 ----------------
 
+- Added `-s stopstart` and `-s stopstartworker` so instances are restarted at the very end
+  [sgeulette]
 - Added `-Y` parameter to run some FUNC_PARTS without the collective.indexing patch (`-y`)
   [sgeulette]
 - Unpatched collective.indexing with a reverse sed (no more .bck) and at start when `-y` isn't used
