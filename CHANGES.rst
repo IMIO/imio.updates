@@ -4,7 +4,9 @@ Changelog
 0.3 (unreleased)
 ----------------
 
-- Adde `-P user` parameter to stop/start puppet agent
+- Added `-C TAG` parameter to skip buildouts not up to date on TAG or whose puppet buildout failed
+  [sgeulette]
+- Added `-P user` parameter to stop/start puppet agent
   [sgeulette]
 - Added `-s stopstart` and `-s stopstartworker` so instances are restarted at the very end
   [sgeulette]

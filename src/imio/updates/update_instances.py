@@ -341,6 +341,34 @@ def run_puppet(params):
     return True
 
 
+def check_buildout(path, tag, with_buildout):
+    """Check that HEAD is on tag (or after) and, without -b, that the last puppet buildout succeeded"""
+    (out, err, code) = runCommand("git -C {} merge-base --is-ancestor {} HEAD".format(path, tag))
+    if code:  # 1: tag not in HEAD history, 128: unknown tag
+        error(append(messages, "Buildout isn't on tag '{}' or after: {}".format(tag, get_git_tag(path))))
+        return False
+    if with_buildout:  # buildout is run here and its result checked by run_buildout
+        return True
+    log = os.path.join(path, "puppet-buildout-{}.log".format(os.path.basename(path)))
+    if not os.path.exists(log):
+        error(append(messages, "Puppet buildout log '{}' doesn't exist".format(log)))
+        return False
+    # last HEAD move (checkout, pull) from reflog, as "HEAD@{timestamp}"; commit time if no reflog
+    (out, err, code) = runCommand("git -C {} reflog -1 --date=unix --format=%gd".format(path))
+    if not out or not out[0].strip():
+        (out, err, code) = runCommand("git -C {} log -1 --format=HEAD@{{%ct}}".format(path))
+    moved = int(re.search(r"\{(\d+)\}", out[0]).group(1))
+    if os.path.getmtime(log) < moved:
+        error(append(messages, "Puppet buildout log '{}' is older than the last code update".format(log)))
+        return False
+    (out, err, code) = runCommand("tail -n 1 {}".format(log))
+    # puppet runs 'make buildout': a failure ends with "make: *** [Makefile:42: buildout] Error 1"
+    if not out or re.match(r"make: \*\*\* .* Error \d+", out[0]):
+        error(append(messages, "Puppet buildout failed: see '{}'".format(log)))
+        return False
+    return True
+
+
 def run_buildout(buildouts, bldt):
     path = buildouts[bldt]["path"]
     os.chdir(path)
@@ -721,6 +749,14 @@ def main():
         " and enable it at the end if no error occurred",
     )
     parser.add_argument(
+        "-C",
+        "--check",
+        dest="check",
+        metavar="TAG",
+        help="Skip buildouts not on TAG (or a later commit) or whose last puppet buildout failed"
+        " (puppet-buildout-DIR.log). With `-b`, only the tag is checked",
+    )
+    parser.add_argument(
         "-W",
         "--wait",
         action="store_true",
@@ -823,6 +859,8 @@ def main():
         buildouts[bldt]["port"] = get_instance_port(path)
 
         verbose(append(messages, "Buildout %s    (%s)" % (path, get_git_tag(path))))
+        if ns.check and not check_buildout(path, ns.check, buildout):
+            continue
         if "f" in restart:
             fatals = [p for p, st in buildouts[bldt]["spv"] if st in ("FATAL", "EXITED")]
             if fatals:

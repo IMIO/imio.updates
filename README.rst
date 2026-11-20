@@ -92,6 +92,10 @@ List of available parameters:
 
 * -W, --wait : Wait for instance to be up and running during a `-s restart`
 
+* -C TAG, --check=TAG : skip a buildout not on TAG (or a later commit) or whose last puppet buildout failed
+  (last line of `puppet-buildout-DIR.log` in the buildout) or is older than the last code update (git reflog). With `-b`, only the tag is checked
+  (the buildout result is checked by the run itself)
+
 To change log level when running instance script, change LOGGER_LEVEL in run_script.py.
 
 Helper methods

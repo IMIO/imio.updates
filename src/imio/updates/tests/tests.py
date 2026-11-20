@@ -3,8 +3,13 @@
 # tests
 # IMIO <support@imio.be>
 #
+from imio.updates.update_instances import check_buildout
 from imio.updates.update_instances import run_function_parts
 from unittest.mock import patch
+
+import os
+import subprocess
+import tempfile
 
 import unittest
 
@@ -113,6 +118,31 @@ class TestUpdateInstances(unittest.TestCase):
                 "FUNC_PART=a BATCH=10 BATCH_LAST=1",
             ],
         )
+
+
+    def test_check_buildout(self):
+        path = os.path.join(tempfile.mkdtemp(), "bldt")
+        git = ["git", "-C", path, "-c", "user.name=t", "-c", "user.email=t@t"]
+        subprocess.run(["git", "init", "-q", path], check=True)
+        subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "1"], check=True)
+        subprocess.run(git + ["tag", "1.0"], check=True)
+        subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "2"], check=True)
+        subprocess.run(git + ["tag", "2.0"], check=True)
+        self.assertTrue(check_buildout(path, "1.0", True))  # commit after tag
+        self.assertTrue(check_buildout(path, "2.0", True))  # on tag
+        subprocess.run(git + ["checkout", "-q", "1.0"], check=True)
+        self.assertFalse(check_buildout(path, "2.0", True))  # before tag
+        self.assertFalse(check_buildout(path, "3.0", True))  # unknown tag
+        self.assertFalse(check_buildout(path, "1.0", False))  # no puppet log
+        log = os.path.join(path, "puppet-buildout-bldt.log")
+        with open(log, "w") as fh:
+            fh.write("mr.developer: There have been errors\nmake: *** [Makefile:42: buildout] Error 1\n")
+        self.assertFalse(check_buildout(path, "1.0", False))
+        with open(log, "w") as fh:
+            fh.write("Installing instance1.\nGenerated script '/srv/instances/bldt/bin/instance1'.\n")
+        self.assertTrue(check_buildout(path, "1.0", False))
+        os.utime(log, (0, 0))  # log older than the checkout
+        self.assertFalse(check_buildout(path, "1.0", False))
 
 
 if __name__ == "__main__":
